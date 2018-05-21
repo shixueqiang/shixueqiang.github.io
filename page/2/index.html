@@ -151,870 +151,6 @@
           <div id="js-content" class="content-ll">
             
   
-    <article id="post-go-e8-af-ad-e8-a8-80aes-cfb-e5-8a-a0-e8-a7-a3-e5-af-86-e6-9c-8d-e5-8a-a1-e7-ab-af-e4-b8-8e-e5-ae-a2-e6-88-b7-e7-ab-af-e4-ba-92-e9-80-9a-1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2017/08/04/go-e8-af-ad-e8-a8-80aes-cfb-e5-8a-a0-e8-a7-a3-e5-af-86-e6-9c-8d-e5-8a-a1-e7-ab-af-e4-b8-8e-e5-ae-a2-e6-88-b7-e7-ab-af-e4-ba-92-e9-80-9a-1/">go语言AES CFB加解密服务端与客户端互通</a>
-    </h1>
-  
-
-        
-        <a href="/2017/08/04/go-e8-af-ad-e8-a8-80aes-cfb-e5-8a-a0-e8-a7-a3-e5-af-86-e6-9c-8d-e5-8a-a1-e7-ab-af-e4-b8-8e-e5-ae-a2-e6-88-b7-e7-ab-af-e4-ba-92-e9-80-9a-1/" class="archive-article-date">
-  	<time datetime="2017-08-03T16:09:20.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-08-04</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p><pre class="html">package utils</pre></p>
-<p>import (<br>    “bytes”<br>    “crypto/aes”<br>    “crypto/cipher”<br>    “encoding/base64”<br>    “fmt”<br>    “log”<br>)</p>
-<p>var commonIV = []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f}</p>
-<p>var key = “32位key”</p>
-<p>func AesEncrypt(content string) string {<br>    // 创建加密算法aes<br>    c, err := aes.NewCipher([]byte(key))<br>    if err != nil {<br>        log.Fatalln(“Error: NewCipher(%d bytes) = %s”, len(key), err)<br>    }</p>
-<pre><code>//加密字符串
-cfb := cipher.NewCFBEncrypter(c, commonIV)
-ciphertext := make([]byte, len(content))
-cfb.XORKeyStream(ciphertext, []byte(content))
-fmt.Printf(&quot;%s=&amp;gt;%x\n&quot;, content, ciphertext)
-ciphertext = Base64Encode(ciphertext)
-return string(ciphertext)
-</code></pre><p>}</p>
-<p>func AesDecrypt(content string) string {<br>    text := make([]byte, len(content))<br>    var err error<br>    text, err = Base64Decode([]byte(content))<br>    if err != nil {<br>        log.Fatalln(err)<br>    }<br>    // 创建加密算法aes<br>    c, err := aes.NewCipher([]byte(key))<br>    if err != nil {<br>        log.Fatalln(“Error: NewCipher(%d bytes) = %s”, len(key), err)<br>    }<br>    // 解密字符串<br>    decryptText := make([]byte, len(text))<br>    cfbdec := cipher.NewCFBDecrypter(c, commonIV)<br>    cfbdec.XORKeyStream(decryptText, []byte(text))<br>    fmt.Printf(“%x=&gt;%s\n”, text, decryptText)<br>    return string(decryptText)<br>}<br>&nbsp;</p>
-<p><div><span style="font-size: 18px;">客户端解密时不同语言容易出现问题，一种简单的处理办法就是对go代码交叉编译出android端和ios端的lib库，我们可以使用go mobile，<a href="https://github.com/golang/go/wiki/Mobile" target="_blank" rel="noopener">https://github.com/golang/go/wiki/Mobile</a></span></div></p>
-<p><div><span style="font-size: 18px;">获取：</span></div></p>
-<p><div><span style="font-size: 18px;">$ go get golang.org/x/mobile/cmd/gomobile</span></div></p>
-<p><div><span style="font-size: 18px;">$ gomobile init # it might take a few minutes</span></div></p>
-<p><div><span style="font-size: 18px;">编译：</span></div></p>
-<p><div><span style="font-size: 18px;">$ gomobile bind -target=android golang.org/x/mobile/example/bind/hello</span></div></p>
-<p><div><span style="font-size: 18px;">会生成一个aar</span></div><br>&nbsp;</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/android//" class="article-tag-list-link color3">android</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/android/go//" class="article-tag-list-link color3">go</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2017/08/04/go-e8-af-ad-e8-a8-80aes-cfb-e5-8a-a0-e8-a7-a3-e5-af-86-e6-9c-8d-e5-8a-a1-e7-ab-af-e4-b8-8e-e5-ae-a2-e6-88-b7-e7-ab-af-e4-ba-92-e9-80-9a-1/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-go-e8-af-ad-e8-a8-80aes-cfb-e5-8a-a0-e8-a7-a3-e5-af-86-e6-9c-8d-e5-8a-a1-e7-ab-af-e4-b8-8e-e5-ae-a2-e6-88-b7-e7-ab-af-e4-ba-92-e9-80-9a" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2017/08/04/go-e8-af-ad-e8-a8-80aes-cfb-e5-8a-a0-e8-a7-a3-e5-af-86-e6-9c-8d-e5-8a-a1-e7-ab-af-e4-b8-8e-e5-ae-a2-e6-88-b7-e7-ab-af-e4-ba-92-e9-80-9a/">go语言AES CFB加解密服务端与客户端互通</a>
-    </h1>
-  
-
-        
-        <a href="/2017/08/04/go-e8-af-ad-e8-a8-80aes-cfb-e5-8a-a0-e8-a7-a3-e5-af-86-e6-9c-8d-e5-8a-a1-e7-ab-af-e4-b8-8e-e5-ae-a2-e6-88-b7-e7-ab-af-e4-ba-92-e9-80-9a/" class="archive-article-date">
-  	<time datetime="2017-08-03T16:09:20.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-08-04</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p><pre class="html">package utils</pre></p>
-<p>import (<br>    “bytes”<br>    “crypto/aes”<br>    “crypto/cipher”<br>    “encoding/base64”<br>    “fmt”<br>    “log”<br>)</p>
-<p>var commonIV = []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f}</p>
-<p>var key = “32位key”</p>
-<p>func AesEncrypt(content string) string {<br>    // 创建加密算法aes<br>    c, err := aes.NewCipher([]byte(key))<br>    if err != nil {<br>        log.Fatalln(“Error: NewCipher(%d bytes) = %s”, len(key), err)<br>    }</p>
-<pre><code>//加密字符串
-cfb := cipher.NewCFBEncrypter(c, commonIV)
-ciphertext := make([]byte, len(content))
-cfb.XORKeyStream(ciphertext, []byte(content))
-fmt.Printf(&quot;%s=&amp;gt;%x\n&quot;, content, ciphertext)
-ciphertext = Base64Encode(ciphertext)
-return string(ciphertext)
-</code></pre><p>}</p>
-<p>func AesDecrypt(content string) string {<br>    text := make([]byte, len(content))<br>    var err error<br>    text, err = Base64Decode([]byte(content))<br>    if err != nil {<br>        log.Fatalln(err)<br>    }<br>    // 创建加密算法aes<br>    c, err := aes.NewCipher([]byte(key))<br>    if err != nil {<br>        log.Fatalln(“Error: NewCipher(%d bytes) = %s”, len(key), err)<br>    }<br>    // 解密字符串<br>    decryptText := make([]byte, len(text))<br>    cfbdec := cipher.NewCFBDecrypter(c, commonIV)<br>    cfbdec.XORKeyStream(decryptText, []byte(text))<br>    fmt.Printf(“%x=&gt;%s\n”, text, decryptText)<br>    return string(decryptText)<br>}<br>&nbsp;</p>
-<p><div><span style="font-size: 18px;">客户端解密时不同语言容易出现问题，一种简单的处理办法就是对go代码交叉编译出android端和ios端的lib库，我们可以使用go mobile，<a href="https://github.com/golang/go/wiki/Mobile" target="_blank" rel="noopener">https://github.com/golang/go/wiki/Mobile</a></span></div></p>
-<p><div><span style="font-size: 18px;">获取：</span></div></p>
-<p><div><span style="font-size: 18px;">$ go get golang.org/x/mobile/cmd/gomobile</span></div></p>
-<p><div><span style="font-size: 18px;">$ gomobile init # it might take a few minutes</span></div></p>
-<p><div><span style="font-size: 18px;">编译：</span></div></p>
-<p><div><span style="font-size: 18px;">$ gomobile bind -target=android golang.org/x/mobile/example/bind/hello</span></div></p>
-<p><div><span style="font-size: 18px;">会生成一个aar</span></div><br>&nbsp;</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/android//" class="article-tag-list-link color3">android</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/android/go//" class="article-tag-list-link color3">go</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2017/08/04/go-e8-af-ad-e8-a8-80aes-cfb-e5-8a-a0-e8-a7-a3-e5-af-86-e6-9c-8d-e5-8a-a1-e7-ab-af-e4-b8-8e-e5-ae-a2-e6-88-b7-e7-ab-af-e4-ba-92-e9-80-9a/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-android-e6-a0-b9-e6-8d-ae-e5-8c-85-e5-90-8d-e8-8e-b7-e5-8f-96-e7-ad-be-e5-90-8dmd5-e4-bf-a1-e6-81-af" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2017/05/11/android-e6-a0-b9-e6-8d-ae-e5-8c-85-e5-90-8d-e8-8e-b7-e5-8f-96-e7-ad-be-e5-90-8dmd5-e4-bf-a1-e6-81-af/">android根据包名获取签名MD5信息</a>
-    </h1>
-  
-
-        
-        <a href="/2017/05/11/android-e6-a0-b9-e6-8d-ae-e5-8c-85-e5-90-8d-e8-8e-b7-e5-8f-96-e7-ad-be-e5-90-8dmd5-e4-bf-a1-e6-81-af/" class="archive-article-date">
-  	<time datetime="2017-05-11T14:14:18.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-05-11</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <ol>
-<li><span class="keyword">private</span> Signature[] getRawSignature(Context paramContext, String paramString) {</li>
-<li><span class="keyword">if</span> ((paramString == <span class="keyword">null</span>) || (paramString.length() == <span class="number">0</span>)) {</li>
-<li>errout(<span class="string">“getSignature, packageName is null”</span>);</li>
-<li><span class="keyword">return</span> <span class="keyword">null</span>;</li>
-<li>}</li>
-<li>PackageManager localPackageManager = paramContext.getPackageManager();</li>
-<li>PackageInfo localPackageInfo;</li>
-<li><span class="keyword">try</span> {</li>
-<li>localPackageInfo = localPackageManager.getPackageInfo(paramString, PackageManager.GET_SIGNATURES);</li>
-<li><span class="keyword">if</span> (localPackageInfo == <span class="keyword">null</span>) {</li>
-<li>errout(<span class="string">“info is null, packageName = “</span> + paramString);</li>
-<li><span class="keyword">return</span> <span class="keyword">null</span>;</li>
-<li>}</li>
-<li>} <span class="keyword">catch</span> (PackageManager.NameNotFoundException localNameNotFoundException) {</li>
-<li>errout(<span class="string">“NameNotFoundException”</span>);</li>
-<li><span class="keyword">return</span> <span class="keyword">null</span>;</li>
-<li>}</li>
-<li><span class="keyword">return</span> localPackageInfo.signatures;</li>
-<li><p>}</p>
-</li>
-<li><p><span class="keyword">private</span> Signature[] getRawSignature(Context paramContext, String paramString) {</p>
-</li>
-<li><span class="keyword">if</span> ((paramString == <span class="keyword">null</span>) || (paramString.length() == <span class="number">0</span>)) {</li>
-<li>errout(<span class="string">“getSignature, packageName is null”</span>);</li>
-<li><span class="keyword">return</span> <span class="keyword">null</span>;</li>
-<li>}</li>
-<li>PackageManager localPackageManager = paramContext.getPackageManager();</li>
-<li>PackageInfo localPackageInfo;</li>
-<li><span class="keyword">try</span> {</li>
-<li>localPackageInfo = localPackageManager.getPackageInfo(paramString, PackageManager.GET_SIGNATURES);</li>
-<li><span class="keyword">if</span> (localPackageInfo == <span class="keyword">null</span>) {</li>
-<li>errout(<span class="string">“info is null, packageName = “</span> + paramString);</li>
-<li><span class="keyword">return</span> <span class="keyword">null</span>;</li>
-<li>}</li>
-<li>} <span class="keyword">catch</span> (PackageManager.NameNotFoundException localNameNotFoundException) {</li>
-<li>errout(<span class="string">“NameNotFoundException”</span>);</li>
-<li><span class="keyword">return</span> <span class="keyword">null</span>;</li>
-<li>}</li>
-<li><span class="keyword">return</span> localPackageInfo.signatures;</li>
-<li>}<br>源码地址：<a href="https://github.com/shixueqiang/GenSignature" target="_blank" rel="noopener">GenSignature</a></li>
-</ol>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/未分类//" class="article-tag-list-link color4">未分类</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2017/05/11/android-e6-a0-b9-e6-8d-ae-e5-8c-85-e5-90-8d-e8-8e-b7-e5-8f-96-e7-ad-be-e5-90-8dmd5-e4-bf-a1-e6-81-af/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-android-e6-a0-b9-e6-8d-ae-e5-8c-85-e5-90-8d-e8-8e-b7-e5-8f-96-e7-ad-be-e5-90-8dmd5-e4-bf-a1-e6-81-af-1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2017/05/11/android-e6-a0-b9-e6-8d-ae-e5-8c-85-e5-90-8d-e8-8e-b7-e5-8f-96-e7-ad-be-e5-90-8dmd5-e4-bf-a1-e6-81-af-1/">android根据包名获取签名MD5信息</a>
-    </h1>
-  
-
-        
-        <a href="/2017/05/11/android-e6-a0-b9-e6-8d-ae-e5-8c-85-e5-90-8d-e8-8e-b7-e5-8f-96-e7-ad-be-e5-90-8dmd5-e4-bf-a1-e6-81-af-1/" class="archive-article-date">
-  	<time datetime="2017-05-11T14:14:18.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-05-11</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <ol>
-<li><span class="keyword">private</span> Signature[] getRawSignature(Context paramContext, String paramString) {</li>
-<li><span class="keyword">if</span> ((paramString == <span class="keyword">null</span>) || (paramString.length() == <span class="number">0</span>)) {</li>
-<li>errout(<span class="string">“getSignature, packageName is null”</span>);</li>
-<li><span class="keyword">return</span> <span class="keyword">null</span>;</li>
-<li>}</li>
-<li>PackageManager localPackageManager = paramContext.getPackageManager();</li>
-<li>PackageInfo localPackageInfo;</li>
-<li><span class="keyword">try</span> {</li>
-<li>localPackageInfo = localPackageManager.getPackageInfo(paramString, PackageManager.GET_SIGNATURES);</li>
-<li><span class="keyword">if</span> (localPackageInfo == <span class="keyword">null</span>) {</li>
-<li>errout(<span class="string">“info is null, packageName = “</span> + paramString);</li>
-<li><span class="keyword">return</span> <span class="keyword">null</span>;</li>
-<li>}</li>
-<li>} <span class="keyword">catch</span> (PackageManager.NameNotFoundException localNameNotFoundException) {</li>
-<li>errout(<span class="string">“NameNotFoundException”</span>);</li>
-<li><span class="keyword">return</span> <span class="keyword">null</span>;</li>
-<li>}</li>
-<li><span class="keyword">return</span> localPackageInfo.signatures;</li>
-<li><p>}</p>
-</li>
-<li><p><span class="keyword">private</span> Signature[] getRawSignature(Context paramContext, String paramString) {</p>
-</li>
-<li><span class="keyword">if</span> ((paramString == <span class="keyword">null</span>) || (paramString.length() == <span class="number">0</span>)) {</li>
-<li>errout(<span class="string">“getSignature, packageName is null”</span>);</li>
-<li><span class="keyword">return</span> <span class="keyword">null</span>;</li>
-<li>}</li>
-<li>PackageManager localPackageManager = paramContext.getPackageManager();</li>
-<li>PackageInfo localPackageInfo;</li>
-<li><span class="keyword">try</span> {</li>
-<li>localPackageInfo = localPackageManager.getPackageInfo(paramString, PackageManager.GET_SIGNATURES);</li>
-<li><span class="keyword">if</span> (localPackageInfo == <span class="keyword">null</span>) {</li>
-<li>errout(<span class="string">“info is null, packageName = “</span> + paramString);</li>
-<li><span class="keyword">return</span> <span class="keyword">null</span>;</li>
-<li>}</li>
-<li>} <span class="keyword">catch</span> (PackageManager.NameNotFoundException localNameNotFoundException) {</li>
-<li>errout(<span class="string">“NameNotFoundException”</span>);</li>
-<li><span class="keyword">return</span> <span class="keyword">null</span>;</li>
-<li>}</li>
-<li><span class="keyword">return</span> localPackageInfo.signatures;</li>
-<li>}<br>源码地址：<a href="https://github.com/shixueqiang/GenSignature" target="_blank" rel="noopener">GenSignature</a></li>
-</ol>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/未分类//" class="article-tag-list-link color4">未分类</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2017/05/11/android-e6-a0-b9-e6-8d-ae-e5-8c-85-e5-90-8d-e8-8e-b7-e5-8f-96-e7-ad-be-e5-90-8dmd5-e4-bf-a1-e6-81-af-1/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-e4-bd-bf-e7-94-a8glide-e5-a1-ab-e8-bf-87-e7-9a-84-e5-90-84-e7-a7-8d-e5-9d-91" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2017/01/22/e4-bd-bf-e7-94-a8glide-e5-a1-ab-e8-bf-87-e7-9a-84-e5-90-84-e7-a7-8d-e5-9d-91/">使用glide填过的各种坑</a>
-    </h1>
-  
-
-        
-        <a href="/2017/01/22/e4-bd-bf-e7-94-a8glide-e5-a1-ab-e8-bf-87-e7-9a-84-e5-90-84-e7-a7-8d-e5-9d-91/" class="archive-article-date">
-  	<time datetime="2017-01-22T05:43:49.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-01-22</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>使用版本glide-3.7.0</p>
-<p>坑一：</p>
-<p>无法手动刷新缓存，只能改变key添加自定义签名，我是将头像版本号放到key中了，因为取头像是根据手机号取的，头像url路径并不会变，而且首次加载时并不能拿到版本号。</p>
-<p>builder.signature(new StringSignature(etag));</p>
-<p>坑二：</p>
-<p>从磁盘缓存加载头像时太慢，导致能看到由默认图变到头像的过程，给人感觉头像闪了一下，体验不好。因为glide的磁盘缓存加载逻辑放到了工作线程中，提高了滑动时的流畅度，但是也降低了加载速度，没想到好办法解决;</p>
-<p>坑三：</p>
-<p>服务器返回的是xml数据，需要解析完xml才能获取头像byte[],好在glide有现成的api</p>
-<p>builder.asBitmap().imageDecoder(decoder)</p>
-<p><pre class="html">public class XmlBitmapDecoder implements ResourceDecoder&lt;InputStream, Bitmap&gt; {<br>    private static final String ID = “XmlBitmapDecoder.com.chinamobile.rcs.contacts.glide”;<br>    private String id;<br>    private final BitmapPool bitmapPool;</pre></p>
-<pre><code>public XmlBitmapDecoder(BitmapPool bitmapPool) {
-    this.bitmapPool = bitmapPool;
-}
-
-@Override
-public Resource&amp;lt;Bitmap&amp;gt; decode(InputStream is, int width, int height) throws IOException {
-    AvatarModel avatarModel = Utils.stream2Avatar(is);
-    byte[] datas = avatarModel.getData();
-    Bitmap bitmap = BitmapFactory.decodeByteArray(datas, 0, datas.length);
-    return BitmapResource.obtain(bitmap,bitmapPool);
-}
-
-@Override
-public String getId() {
-    if (this.id == null) {
-        this.id = ID;
-    }
-    return this.id;
-}
-</code></pre><p>}<br>坑四：</p>
-<p>消息列表中因为有不同的消息类型，默认头像也不一样，glide占位图不设置时，会设置null，所以onLoadStarted方法里需要区分开；</p>
-<p>坑五：</p>
-<p>token验证，切圆角图，这个相对容易实现</p>
-<p>坑六：</p>
-<p>某些场景需要跳过缓存强制从网络拉取，但是需要先用缓存的头像当占位图，这点上glide没有开放现成的api，实现方式有点迂回：</p>
-<p><pre class="html">DrawableTypeRequest&lt;MyGlideUrl&gt; builder = Glide.with(mContext).using(new StreamModelLoader&lt;MyGlideUrl&gt;() {</pre></p>
-<pre><code>    @Override
-    public DataFetcher&amp;lt;InputStream&amp;gt; getResourceFetcher(final MyGlideUrl model, int arg1, int arg2) {
-        return new DataFetcher&amp;lt;InputStream&amp;gt;() {
-            @Override
-            public InputStream loadData(Priority priority) throws Exception {
-                throw new IOException();
-                // do nothing
-            }
-
-            @Override
-            public void cleanup() {
-
-            }
-
-            @Override
-            public String getId() {
-                return model.getCacheKey();
-            }
-
-            @Override
-            public void cancel() {
-
-            }
-        };
-    }
-}).load(glideUrl);&lt;/pre&gt;
-</code></pre><p>重点是loadData里边不做任何事，正常情况下这里本该写从网络拉取头像获取输入流的逻辑。这样就能变相实现从缓存拿到bitmap。</p>
-<p>坑七：</p>
-<p>还是加载慢的问题，但是有时候从memory缓存里加载竟然也需要50，60ms，打开glide调试，发现从缓存加载只需要零点几毫秒，但是从我代码调用到真正发起请求竟然用了大部分时间，有人说是得到view宽高后才会发起请求，于是添加.override(w, h)，效果不明显。</p>
-<p>已经决定自己实现一套头像加载逻辑了，用第三方的实在是不够灵活</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/未分类//" class="article-tag-list-link color4">未分类</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2017/01/22/e4-bd-bf-e7-94-a8glide-e5-a1-ab-e8-bf-87-e7-9a-84-e5-90-84-e7-a7-8d-e5-9d-91/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-e4-bd-bf-e7-94-a8glide-e5-a1-ab-e8-bf-87-e7-9a-84-e5-90-84-e7-a7-8d-e5-9d-91-1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2017/01/22/e4-bd-bf-e7-94-a8glide-e5-a1-ab-e8-bf-87-e7-9a-84-e5-90-84-e7-a7-8d-e5-9d-91-1/">使用glide填过的各种坑</a>
-    </h1>
-  
-
-        
-        <a href="/2017/01/22/e4-bd-bf-e7-94-a8glide-e5-a1-ab-e8-bf-87-e7-9a-84-e5-90-84-e7-a7-8d-e5-9d-91-1/" class="archive-article-date">
-  	<time datetime="2017-01-22T05:43:49.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2017-01-22</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>使用版本glide-3.7.0</p>
-<p>坑一：</p>
-<p>无法手动刷新缓存，只能改变key添加自定义签名，我是将头像版本号放到key中了，因为取头像是根据手机号取的，头像url路径并不会变，而且首次加载时并不能拿到版本号。</p>
-<p>builder.signature(new StringSignature(etag));</p>
-<p>坑二：</p>
-<p>从磁盘缓存加载头像时太慢，导致能看到由默认图变到头像的过程，给人感觉头像闪了一下，体验不好。因为glide的磁盘缓存加载逻辑放到了工作线程中，提高了滑动时的流畅度，但是也降低了加载速度，没想到好办法解决;</p>
-<p>坑三：</p>
-<p>服务器返回的是xml数据，需要解析完xml才能获取头像byte[],好在glide有现成的api</p>
-<p>builder.asBitmap().imageDecoder(decoder)</p>
-<p><pre class="html">public class XmlBitmapDecoder implements ResourceDecoder&lt;InputStream, Bitmap&gt; {<br>    private static final String ID = “XmlBitmapDecoder.com.chinamobile.rcs.contacts.glide”;<br>    private String id;<br>    private final BitmapPool bitmapPool;</pre></p>
-<pre><code>public XmlBitmapDecoder(BitmapPool bitmapPool) {
-    this.bitmapPool = bitmapPool;
-}
-
-@Override
-public Resource&amp;lt;Bitmap&amp;gt; decode(InputStream is, int width, int height) throws IOException {
-    AvatarModel avatarModel = Utils.stream2Avatar(is);
-    byte[] datas = avatarModel.getData();
-    Bitmap bitmap = BitmapFactory.decodeByteArray(datas, 0, datas.length);
-    return BitmapResource.obtain(bitmap,bitmapPool);
-}
-
-@Override
-public String getId() {
-    if (this.id == null) {
-        this.id = ID;
-    }
-    return this.id;
-}
-</code></pre><p>}<br>坑四：</p>
-<p>消息列表中因为有不同的消息类型，默认头像也不一样，glide占位图不设置时，会设置null，所以onLoadStarted方法里需要区分开；</p>
-<p>坑五：</p>
-<p>token验证，切圆角图，这个相对容易实现</p>
-<p>坑六：</p>
-<p>某些场景需要跳过缓存强制从网络拉取，但是需要先用缓存的头像当占位图，这点上glide没有开放现成的api，实现方式有点迂回：</p>
-<p><pre class="html">DrawableTypeRequest&lt;MyGlideUrl&gt; builder = Glide.with(mContext).using(new StreamModelLoader&lt;MyGlideUrl&gt;() {</pre></p>
-<pre><code>    @Override
-    public DataFetcher&amp;lt;InputStream&amp;gt; getResourceFetcher(final MyGlideUrl model, int arg1, int arg2) {
-        return new DataFetcher&amp;lt;InputStream&amp;gt;() {
-            @Override
-            public InputStream loadData(Priority priority) throws Exception {
-                throw new IOException();
-                // do nothing
-            }
-
-            @Override
-            public void cleanup() {
-
-            }
-
-            @Override
-            public String getId() {
-                return model.getCacheKey();
-            }
-
-            @Override
-            public void cancel() {
-
-            }
-        };
-    }
-}).load(glideUrl);&lt;/pre&gt;
-</code></pre><p>重点是loadData里边不做任何事，正常情况下这里本该写从网络拉取头像获取输入流的逻辑。这样就能变相实现从缓存拿到bitmap。</p>
-<p>坑七：</p>
-<p>还是加载慢的问题，但是有时候从memory缓存里加载竟然也需要50，60ms，打开glide调试，发现从缓存加载只需要零点几毫秒，但是从我代码调用到真正发起请求竟然用了大部分时间，有人说是得到view宽高后才会发起请求，于是添加.override(w, h)，效果不明显。</p>
-<p>已经决定自己实现一套头像加载逻辑了，用第三方的实在是不够灵活</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/未分类//" class="article-tag-list-link color4">未分类</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2017/01/22/e4-bd-bf-e7-94-a8glide-e5-a1-ab-e8-bf-87-e7-9a-84-e5-90-84-e7-a7-8d-e5-9d-91-1/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-android-e5-b0-86so-e6-89-93-e5-88-b0jar-e5-8c-85-e4-b8-ad-e5-b9-b6-e8-bf-90-e8-a1-8c-1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2016/09/13/android-e5-b0-86so-e6-89-93-e5-88-b0jar-e5-8c-85-e4-b8-ad-e5-b9-b6-e8-bf-90-e8-a1-8c-1/">android将so打到jar包中并运行</a>
-    </h1>
-  
-
-        
-        <a href="/2016/09/13/android-e5-b0-86so-e6-89-93-e5-88-b0jar-e5-8c-85-e4-b8-ad-e5-b9-b6-e8-bf-90-e8-a1-8c-1/" class="archive-article-date">
-  	<time datetime="2016-09-13T06:57:07.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-09-13</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>加载so有两种方法</p>
-<p>System.load() 和System.loadLibrary(); 前者需传入库文件的绝对路径，后者只需传入库文件名。</p>
-<p>首先我的jar包目录如下：</p>
-<p><img src="http://img.blog.csdn.net/20160704165107689?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQv/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center" alt=""></p>
-<p>Loader是加载类：</p>
-<p><pre class="html"> static {<br>        try {<br>            InputStream is = null;<br>            if(isCPUInfo64()) {<br>                is = Loader.class.getResource(“arm64/libhellojni.so”).openStream();<br>            }else {<br>                is = Loader.class.getResource(“arm32/libhellojni.so”).openStream();<br>            }<br>            File tempFile = File.createTempFile(“hellojni”, “.so”);<br>            FileOutputStream fos = new FileOutputStream(tempFile);<br>            int i;<br>            byte[] buf = new byte[1024];<br>            while ((i = is.read(buf)) != -1) {<br>                fos.write(buf, 0, i);<br>            }<br>            is.close();<br>            fos.close();<br>            System.load(tempFile.getAbsolutePath());<br>            tempFile.deleteOnExit();<br>        } catch (IOException e) {<br>            e.printStackTrace();<br>        }<br>    }</pre><br>&nbsp;</p>
-<p><pre class="html">private static boolean isCPUInfo64() {<br>        File cpuInfo = new File(“/proc/cpuinfo”);<br>        if (cpuInfo != null &amp;&amp; cpuInfo.exists()) {<br>            InputStream inputStream = null;<br>            BufferedReader bufferedReader = null;<br>            try {<br>                inputStream = new FileInputStream(cpuInfo);<br>                bufferedReader = new BufferedReader(new InputStreamReader(inputStream), 512);<br>                String line = bufferedReader.readLine();<br>                if (line != null &amp;&amp; line.length() &gt; 0 &amp;&amp; line.toLowerCase(Locale.US).contains(“arch64”)) {<br>                    return true;<br>                } else {<br>                    return false;<br>                }<br>            } catch (Throwable t) {<br>                Log.d(“isCPUInfo64”, “ error = “ + t.toString());<br>            } finally {<br>                try {<br>                    if (bufferedReader != null) {<br>                        bufferedReader.close();<br>                    }<br>                    if (inputStream != null) {<br>                        inputStream.close();<br>                    }<br>                } catch (Exception e) {<br>                    e.printStackTrace();<br>                }<br>            }<br>        }<br>        return false;<br>    }</pre><br>&nbsp;</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/未分类//" class="article-tag-list-link color4">未分类</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2016/09/13/android-e5-b0-86so-e6-89-93-e5-88-b0jar-e5-8c-85-e4-b8-ad-e5-b9-b6-e8-bf-90-e8-a1-8c-1/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-android-e5-b0-86so-e6-89-93-e5-88-b0jar-e5-8c-85-e4-b8-ad-e5-b9-b6-e8-bf-90-e8-a1-8c" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2016/09/13/android-e5-b0-86so-e6-89-93-e5-88-b0jar-e5-8c-85-e4-b8-ad-e5-b9-b6-e8-bf-90-e8-a1-8c/">android将so打到jar包中并运行</a>
-    </h1>
-  
-
-        
-        <a href="/2016/09/13/android-e5-b0-86so-e6-89-93-e5-88-b0jar-e5-8c-85-e4-b8-ad-e5-b9-b6-e8-bf-90-e8-a1-8c/" class="archive-article-date">
-  	<time datetime="2016-09-13T06:57:07.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-09-13</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>加载so有两种方法</p>
-<p>System.load() 和System.loadLibrary(); 前者需传入库文件的绝对路径，后者只需传入库文件名。</p>
-<p>首先我的jar包目录如下：</p>
-<p><img src="http://img.blog.csdn.net/20160704165107689?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQv/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center" alt=""></p>
-<p>Loader是加载类：</p>
-<p><pre class="html"> static {<br>        try {<br>            InputStream is = null;<br>            if(isCPUInfo64()) {<br>                is = Loader.class.getResource(“arm64/libhellojni.so”).openStream();<br>            }else {<br>                is = Loader.class.getResource(“arm32/libhellojni.so”).openStream();<br>            }<br>            File tempFile = File.createTempFile(“hellojni”, “.so”);<br>            FileOutputStream fos = new FileOutputStream(tempFile);<br>            int i;<br>            byte[] buf = new byte[1024];<br>            while ((i = is.read(buf)) != -1) {<br>                fos.write(buf, 0, i);<br>            }<br>            is.close();<br>            fos.close();<br>            System.load(tempFile.getAbsolutePath());<br>            tempFile.deleteOnExit();<br>        } catch (IOException e) {<br>            e.printStackTrace();<br>        }<br>    }</pre><br>&nbsp;</p>
-<p><pre class="html">private static boolean isCPUInfo64() {<br>        File cpuInfo = new File(“/proc/cpuinfo”);<br>        if (cpuInfo != null &amp;&amp; cpuInfo.exists()) {<br>            InputStream inputStream = null;<br>            BufferedReader bufferedReader = null;<br>            try {<br>                inputStream = new FileInputStream(cpuInfo);<br>                bufferedReader = new BufferedReader(new InputStreamReader(inputStream), 512);<br>                String line = bufferedReader.readLine();<br>                if (line != null &amp;&amp; line.length() &gt; 0 &amp;&amp; line.toLowerCase(Locale.US).contains(“arch64”)) {<br>                    return true;<br>                } else {<br>                    return false;<br>                }<br>            } catch (Throwable t) {<br>                Log.d(“isCPUInfo64”, “ error = “ + t.toString());<br>            } finally {<br>                try {<br>                    if (bufferedReader != null) {<br>                        bufferedReader.close();<br>                    }<br>                    if (inputStream != null) {<br>                        inputStream.close();<br>                    }<br>                } catch (Exception e) {<br>                    e.printStackTrace();<br>                }<br>            }<br>        }<br>        return false;<br>    }</pre><br>&nbsp;</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/未分类//" class="article-tag-list-link color4">未分类</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2016/09/13/android-e5-b0-86so-e6-89-93-e5-88-b0jar-e5-8c-85-e4-b8-ad-e5-b9-b6-e8-bf-90-e8-a1-8c/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
     <article id="post-idea-failed-to-create-a-child-event-loop" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -1091,29 +227,77 @@ public String getId() {
 
 
   
-    <article id="post-idea-failed-to-create-a-child-event-loop-1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-qt-e8-a7-a3-e5-8e-8b-e7-bc-a9zlib-e5-92-8cquazip-e7-9a-84-e4-bd-bf-e7-94-a8" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2016/09/13/idea-failed-to-create-a-child-event-loop-1/">idea failed to create a child event loop</a>
+      <a class="article-title" href="/2016/09/13/qt-e8-a7-a3-e5-8e-8b-e7-bc-a9zlib-e5-92-8cquazip-e7-9a-84-e4-bd-bf-e7-94-a8/">QT解压缩zlib和quazip的使用</a>
     </h1>
   
 
         
-        <a href="/2016/09/13/idea-failed-to-create-a-child-event-loop-1/" class="archive-article-date">
-  	<time datetime="2016-09-13T06:56:35.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-09-13</time>
+        <a href="/2016/09/13/qt-e8-a7-a3-e5-8e-8b-e7-bc-a9zlib-e5-92-8cquazip-e7-9a-84-e4-bd-bf-e7-94-a8/" class="archive-article-date">
+  	<time datetime="2016-09-13T06:55:30.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-09-13</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>idea14 有时候编译出现错误</p>
-<p><pre class="html">Error:Abnormal build process termination:<br>13:15:08,830 |-INFO in ch.qos.logback.classic.LoggerContext[default] - Found resource [logback.groovy] at [jar:file:/D:/Program%20Files/IntelliJ%20IDEA%2014.0.2/plugins/gradle/lib/gradle.jar!/logback.groovy]<br>13:15:08,831 |-ERROR in ch.qos.logback.classic.LoggerContext[default] - Groovy classes are not available on the class path. ABORTING INITIALIZATION.<br>Build process started. Classpath: /D:/Program Files/IntelliJ IDEA 14.0.2/lib/jps-launcher.jar;D:/Program Files (x86)/java/jdk1.7/lib/tools.jar;/D:/Program Files/IntelliJ IDEA 14.0.2/lib/optimizedFileManager.jar;D:/Program Files/IntelliJ IDEA 14.0.2/lib/ecj-4.4.jar<br>Error connecting to 127.0.0.1:61174; reason: failed to create a child event loop<br>java.lang.IllegalStateException: failed to create a child event loop<br>    at io.netty.util.concurrent.MultithreadEventExecutorGroup.&lt;init&gt;(MultithreadEventExecutorGroup.java:81)<br>    at io.netty.channel.MultithreadEventLoopGroup.&lt;init&gt;(MultithreadEventLoopGroup.java:50)<br>    at io.netty.channel.nio.NioEventLoopGroup.&lt;init&gt;(NioEventLoopGroup.java:72)<br>    at io.netty.channel.nio.NioEventLoopGroup.&lt;init&gt;(NioEventLoopGroup.java:58)<br>    at org.jetbrains.jps.cmdline.BuildMain.main(BuildMain.java:97)<br>    at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)<br>    at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:57)<br>    at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)<br>    at java.lang.reflect.Method.invoke(Method.java:601)<br>    at org.jetbrains.jps.cmdline.Launcher.main(Launcher.java:58)<br>Caused by: io.netty.channel.ChannelException: failed to open a new selector<br>    at io.netty.channel.nio.NioEventLoop.openSelector(NioEventLoop.java:127)<br>    at io.netty.channel.nio.NioEventLoop.&lt;init&gt;(NioEventLoop.java:119)<br>    at io.netty.channel.nio.NioEventLoopGroup.newChild(NioEventLoopGroup.java:97)<br>    at io.netty.channel.nio.NioEventLoopGroup.newChild(NioEventLoopGroup.java:31)<br>    at io.netty.util.concurrent.MultithreadEventExecutorGroup.&lt;init&gt;(MultithreadEventExecutorGroup.java:77)<br>    … 9 more<br>Caused by: java.io.IOException: Unable to establish loopback connection</pre><br>一、检测杀毒和防火墙；</p>
-<p>二、 检查ping <a href="http://www.baidu.com" target="_blank" rel="noopener">www.baidu.com</a> 是否是通的，如果不通 ping ip是否是通的，重置网络环境，打开cmd ，输入 netsh winsock reset，重置网络环境，一般可恢复正常，有次我的乌龟svn也出现连接不上服务器的问题，重置网络后正常，严重怀疑360修改了网络配置文件。。。</p>
+        <p>首先我的开发环境是windows10，qtvs2015，vs2015。</p>
+<p>一、zlib的编译</p>
+<p>1、官网下载最新的zlib源码，最新的是1.2.8</p>
+<p>2、用vs自带的命令行工具（编译32位的dll选x86，64位的选x64）<span id="Label3">进入到zlib根目录，执行 nmake -f win32/Makefile.msc ,在根目录下生成：zlib.lib(静态库)  zdll.lib(动态库的导入库)  zlib1.dll(动态库) 。必要的头文件有zlib.h和zconf.h</span>。</p>
+<p>二、quazip的编译</p>
+<p>1、quazip是zlib的封装库，下载源码后用QT打开，编译需要依赖zlib库，右键项目添加库选外部库就好。我添加后在.pro文件末尾会生成下面配置,注意编译64位的quazip，使用的zlib也必须是64位的</p>
+<p><pre class="html">win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../zlib64/ -lzdll</pre></p>
+<p>else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../zlib64/ -lzdll</p>
+<p>else:unix: LIBS += -L$$PWD/../zlib64/ -lzdll</p>
+<p>INCLUDEPATH += $$PWD/../zlib64</p>
+<p>DEPENDPATH += $$PWD/../zlib64<br>&nbsp;</p>
+<p>INCLUDEPATH是头文件路径</p>
+<p>2、右键项目构建会生成quazip.lib和quazip.dll，注意zlib和quazip的默认字符集都是ANSI，在调用的文件的字符集也必须是ANSI，否则编译不过,使用utf-8的话，都必须是utf-8.</p>
+<p>三、使用</p>
+<p>1、使用时同样需要添加外部库zlib和quazip，字符集需要和dll一样，下面是一段解压缩代码</p>
+<p><pre class="html">bool extract(const QString&amp; in_file_path, const QString&amp; out_file_path)<br>{</pre></p>
+<pre><code>QuaZip archive(in_file_path);
+if (!archive.open(QuaZip::mdUnzip))
+    return false;
+
+QString path = out_file_path;
+if (!path.endsWith(&quot;/&quot;) &amp;amp;&amp;amp; !out_file_path.endsWith(&quot;\\&quot;))
+    path += &quot;/&quot;;
+
+QDir dir(out_file_path);
+if (!dir.exists())
+    dir.mkpath(out_file_path);
+
+for( bool f = archive.goToFirstFile(); f; f = archive.goToNextFile() )
+{
+    QString filePath = archive.getCurrentFileName();
+    QuaZipFile zFile(archive.getZipName(), filePath);
+    zFile.open(QIODevice::ReadOnly );
+    QByteArray ba = zFile.readAll();
+    zFile.close();
+
+    if (filePath.endsWith(&quot;/&quot;))
+    {
+        dir.mkpath(filePath);
+    }
+    else
+    {
+        QFile dstFile(path + filePath);
+        if (!dstFile.open(QIODevice::WriteOnly))
+            return false;
+        dstFile.write(ba);
+        dstFile.close();
+    }
+}
+return true;
+</code></pre><p>}<br>2、构建运行，新版QT运行需要拷贝qtvs2015下的plugins下的platforms文件夹到debug或release里边运行，还需要zlib1.dll和quazip.dll放到生成的exe同级目录下。运行没反应的话检查防火墙和杀毒。</p>
 
       
 
@@ -1137,7 +321,1700 @@ public String getId() {
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/2016/09/13/idea-failed-to-create-a-child-event-loop-1/">展开全文 >></a>
+          <a class="article-more-a" href="/2016/09/13/qt-e8-a7-a3-e5-8e-8b-e7-bc-a9zlib-e5-92-8cquazip-e7-9a-84-e4-bd-bf-e7-94-a8/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-apprtcwebrtc-e6-9c-ac-e5-9c-b0-e6-90-ad-e5-bb-ba-e6-9c-8d-e5-8a-a1-e5-99-a8" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2016/09/13/apprtcwebrtc-e6-9c-ac-e5-9c-b0-e6-90-ad-e5-bb-ba-e6-9c-8d-e5-8a-a1-e5-99-a8/">apprtc(webrtc) 本地搭建服务器</a>
+    </h1>
+  
+
+        
+        <a href="/2016/09/13/apprtcwebrtc-e6-9c-ac-e5-9c-b0-e6-90-ad-e5-bb-ba-e6-9c-8d-e5-8a-a1-e5-99-a8/" class="archive-article-date">
+  	<time datetime="2016-09-13T06:53:44.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-09-13</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p><span style="font-size: large;">这两天测试了下webrtc的效果，不知道是不是手机比较渣，画面并不是很清晰，先来说说服务器的部署。部署环境ubuntu14.04 32位。<br></span></p>
+<p><span style="font-size: large;">一、服务器组成</span></p>
+<p><span style="font-size: large;">      1、AppRTC 房间服务器  <a href="https://github.com/webrtc/apprtc" target="_blank" rel="noopener">https://github.com/webrtc/apprtc</a></span></p>
+<p><span style="font-size: large;">      2、Collider  信令服务器  上边源码里自带</span></p>
+<p><span style="font-size: large;">      3、coTurn   穿透服务器   <a href="https://github.com/coturn/coturn" target="_blank" rel="noopener">https://github.com/coturn/coturn</a></span></p>
+<p><span style="font-size: large;">      4、需要自己实现coTurn连接信息接口，主要返回用户名、密码和turn配置信息，通常叫做TURN REST API,不实现这个接口的话AppRTCDemo连不上服务器，浏览器访问的话可以正常访问。</span></p>
+<p><span style="font-size: large;">二、AppRTC房间服务器</span></p>
+<p><span style="font-size: large;">      1、下载代码</span></p>
+<p><span style="font-size: large;">      2、安装依赖</span></p>
+<p><span style="font-size: large;">            sudo apt-get install nodejs</span></p>
+<p><span style="font-size: large;">            sudo npm install -g npm</span></p>
+<p><span style="font-size: large;">            sudo apt-get install nodejs-legacy</span></p>
+<p><span style="font-size: large;">            sudo npm -g install grunt-cli</span></p>
+<p><span style="font-size: large;">            切换到源码目录</span></p>
+<p><span style="font-size: large;">            cd apprtc-master</span></p>
+<p><span style="font-size: large;">            npm install</span></p>
+<p><span style="font-size: large;">            sudo apt-get install python-webtest</span></p>
+<p><span style="font-size: large;">            grunt build</span></p>
+<p><span style="font-size: large;">            编译之后会多出out目录</span></p>
+<p><span style="font-size: large;">            运行还依赖 Google App Engine SDK for  Python <a href="https://cloud.google.com/appengine/downloads#Google_App_Engine_SDK_for_Python" target="_blank" rel="noopener">需翻墙
+</a></span></p>
+<p><span style="font-size: large;">            下载完后设置环境变量<br></span></p>
+<p><span style="font-size: large;">            sudo gedit /etc/profile<br></span></p>
+<p><span style="font-size: large;">            export PATH=$PATH:/home/google_appengine</span></p>
+<p><span style="font-size: large;">            source /etc/profile<br></span></p>
+<p><span style="font-size: large;">        3、修改配置文件</span></p>
+<p><span style="font-size: large;">             主要是src/app_engine目录下的apprtc.py和constants.py</span></p>
+<p><span style="font-size: large;">             首先是<span style="font-size: large;">constants.py</span>：</span></p>
+<p><span style="font-size: large;">             修改TURN_BASE_URL = ‘<a href="http://192.168.214.129:80&#39;" target="_blank" rel="noopener">http://192.168.214.129:80&#39;</a>  这个是上边提到的连接信息接口的地址</span></p>
+<p><span style="font-size: large;">             TURN_URL_TEMPLATE = ‘%s/turn.php?username=%s&amp;key=%s’</span></p>
+<p><span style="font-size: large;">             CEOD_KEY = 和coturn turnserver.conf <span style="font-size: large;">static-auth-secret一致</span><br></span></p>
+<p><span style="font-size: large;">             WSS_INSTANCES = [{<br>WSS_INSTANCE_HOST_KEY: ‘192.168.214.129:8089’,<br>WSS_INSTANCE_NAME_KEY: ‘wsserver-std’,<br>WSS_INSTANCE_ZONE_KEY: ‘us-central1-a’<br>}, {<br>WSS_INSTANCE_HOST_KEY: ‘192.168.214.129:8089’,<br>WSS_INSTANCE_NAME_KEY: ‘wsserver-std-2’,<br>WSS_INSTANCE_ZONE_KEY: ‘us-central1-f’<br>}]</span></p>
+<p><span style="font-size: large;">             apprtc.py:</span></p>
+<p><span style="font-size: large;">             修改get_wss_parameters(request) 下的</span></p>
+<p><span style="font-size: large;">              if wss_tls and wss_tls == ‘false’:<br>wss_url = ‘ws://‘ + wss_host_port_pair + ‘/ws’<br>wss_post_url = ‘http://‘ + wss_host_port_pair<br>else:<br>wss_url = ‘ws://‘ + wss_host_port_pair + ‘/ws’<br>wss_post_url = ‘http://‘ + wss_host_port_pair</span></p>
+<p><span style="font-size: large;">              主要是把原来的wss和https的scheme都改为ws和http，不要让客户端和浏览器去使用ssl连接，如果有第三   方根证书的签名机构颁发的证书就不需要这样了。</span></p>
+<p><span style="font-size: large;">               修改完后重新grunt build下。</span></p>
+<p><span style="font-size: large;">           4、启动</span></p>
+<p><span style="font-size: large;">                dev_appserver.py –host=0.0.0.0 ./out/app_engine</span></p>
+<p><span style="font-size: large;">三、Collider信令服务器</span></p>
+<p><span style="font-size: large;">        1、安装依赖</span></p>
+<p><span style="font-size: large;">         sudo apt-get install golang-go</span></p>
+<p><span style="font-size: large;">         2、在home目下创建文件夹</span></p>
+<p><span style="font-size: large;">         mkdir -p ~/collider_root        并在collider_root目录下创建src目录</span></p>
+<p><span style="font-size: large;">         设置GOPATH环境变量    export GOPATH=~/collider_root</span></p>
+<p><span style="font-size: large;">         将apprtc/src/collider目录下的三个文件夹都拷贝到collider_root/src下</span></p>
+<p><span style="font-size: large;">         进入到collider_root/src,开始编译安装collider，准备好翻墙</span></p>
+<p><span style="font-size: large;">         go get collidermain</span></p>
+<p><span style="font-size: large;">         go install collidermain</span></p>
+<p><span style="font-size: large;">         成功编译后会在collider_root目录下生成bin和pkg目录，执行文件在bin下。</span></p>
+<p><span style="font-size: large;">        3、运行</span></p>
+<p><span style="font-size: large;">          修改collider_root/src/collidermain/main.go填上自己ip地址</span></p>
+<p><span style="font-size: large;">          var roomSrv = flag.String(“room-server”, “<a href="http://192.168.214.129:8080/&quot;" target="_blank" rel="noopener">http://192.168.214.129:8080/&quot;</a>, “The origin of the room server”)</span></p>
+<p><span style="font-size: large;">          启动</span></p>
+<p><span style="font-size: large;">          ~/collider_root/bin/collidermain -port=8089 -tls=false</span></p>
+<p><span style="font-size: large;">四、coTurn 打洞服务器</span></p>
+<p><span style="font-size: large;">        1、下载<a href="http://turnserver.open-sys.org/downloads/" target="_blank" rel="noopener">http://turnserver.open-sys.org/downloads/</a></span></p>
+<p><span style="font-size: large;">         找个适合自己linux系统的，我这里是ubuntu32位所以选了turnserver-4.2.1.2-debian-wheezy-ubuntu-mint-x86-32bits.tar.gz</span></p>
+<p><span style="font-size: large;">         下载完后解压进入解压目录</span></p>
+<p><span style="font-size: large;">          cat INSTALL     查看安装须知</span></p>
+<p><span style="font-size: large;">          sudo apt-get install gdebi-core</span></p>
+<p><span style="font-size: large;">          sudo gdebi coturn_4.2.2.2-1_i386.deb</span></p>
+<p><span style="font-size: large;">         2、编辑配置文件</span></p>
+<p><span style="font-size: large;">           sudo gedit /etc/turnserver.conf</span></p>
+<p><span style="font-size: large;">           listening-device=eth0</span></p>
+<p><span style="font-size: large;">           listening-port=3478<br></span></p>
+<p><span style="font-size: large;">           relay-device=eth1</span></p>
+<p><span style="font-size: large;">           min-port=49152<br>max-port=65535<br></span></p>
+<p><span style="font-size: large;">           Verbose</span></p>
+<p><span style="font-size: large;">           fingerprint</span></p>
+<p><span style="font-size: large;">           lt-cred-mech</span></p>
+<p><span style="font-size: large;">           use-auth-secret</span></p>
+<p><span style="font-size: large;">           static-auth-secret=填写自己的密钥可不修改<br></span></p>
+<p><span style="font-size: large;">           stale-nonce</span></p>
+<p><span style="font-size: large;">           cert=/usr/local/etc/turn_server_cert.pem</span></p>
+<p><span style="font-size: large;">           pkey=/usr/local/etc/turn_server_pkey.pem</span></p>
+<p><span style="font-size: large;">           no-loopback-peers</span></p>
+<p><span style="font-size: large;">           no-multicast-peers</span></p>
+<p><span style="font-size: large;">           mobility</span></p>
+<p><span style="font-size: large;">           no-cli</span></p>
+<p><span style="font-size: large;">         3、生成签名证书</span></p>
+<p><span style="font-size: large;">           sudo openssl req -x509 -newkey  rsa:2048 -keyout<span style="font-size: large;">/usr/local/etc/turn_server_pkey.pem</span> -out <span style="font-size: large;">/usr/local/etc/turn_server_cert.pem</span> -days 99999 -nodes</span></p>
+<p><span style="font-size: large;">4、启动</span></p>
+<p><span style="font-size: large;">          service coturn start</span></p>
+<p><span style="font-size: large;">五、coTurn连接信息接口</span></p>
+<p><span style="font-size: large;">       TURN REST API <a href="http://tools.ietf.org/html/draft-uberti-behave-turn-rest-00" target="_blank" rel="noopener">标准参考文档</a></span></p>
+<p><span style="font-size: large;">       返回json结果示例：</span></p>
+<p><span style="font-size: large;">       {“username”:”1456904882:1231244”,”password”:”jAph7EHMLuPJuxLLC1uRiI3kvq4=”,”ttl”:86400,”uris”:[“turn:192.168.214.129:3478?transport=udp”,”turn:192.168.214.129:3478?transport=tcp”,”turn:192.168.214.129:3479?transport=udp”,”turn:192.168.214.129:3479?transport=tcp”]}</span></p>
+<p><span style="font-size: large;">       1、username字段需要以timestamp + “:”  + username的形式输出</span></p>
+<p><span style="font-size: large;">       2、<span style="font-size: large;">响应的 password 字段，需要以 HMAC-SHA1 算法计算得出，<strong>公式为：【base64_encode( hmac( key,
+</strong></span></span></p>
+<p><span style="font-size: large;"><strong>            <span style="font-size: large;"><b>username ) )】</b></span></strong>。</span><span style="font-size: large;">此处的 key，为 coTurn 服务器配置中的 “static-auth-secret”值。以 key 作为      hmac 算法的密<span style="font-size: large;">钥，turn-username 为被计算的内容，得出的 hmac 摘要后，经 base64 编码得到最终密码。</span></span></p>
+<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       3、uris为后台配置好的，我这里写死</span></span></span></p>
+<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       4、很简单的接口，用惯了java，这里我准备用php，写起来比java快</span></span></span></p>
+<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       </span></span></span></p>
+<p><pre class="html">&lt;?php</pre></p>
+<pre><code>$request_username = $_GET[&quot;username&quot;];
+if(empty($request_username)) {
+    echo &quot;username == null&quot;;
+    exit;
+}
+$request_key = $_GET[&quot;key&quot;];
+$time_to_live = 600;
+$timestamp = time() + $time_to_live;//失效时间
+$response_username = $timestamp.&quot;:&quot;.$_GET[&quot;username&quot;];
+$response_key = $request_key;
+if(empty($response_key))
+    $response_key = &quot;密钥&quot;;//constants.py中CEOD_KEY
+
+$response_password = getSignature($response_username, $response_key);
+
+$jsonObj = new Response();
+$jsonObj-&amp;gt;username = $response_username;
+$jsonObj-&amp;gt;password = $response_password;
+$jsonObj-&amp;gt;ttl = 86400;
+$jsonObj-&amp;gt;uris = array(&quot;turn:192.168.214.129:3478?transport=udp&quot;,&quot;turn:192.168.214.129:3478?transport=tcp&quot;,&quot;turn:192.168.214.129:3479?transport=udp&quot;,&quot;turn:192.168.214.129:3479?transport=tcp&quot;);
+
+echo json_encode($jsonObj);
+
+/** 
+     * 使用HMAC-SHA1算法生成签名值 
+     * 
+ * @param $str 源串 
+     * @param $key 密钥 
+     * 
+     * @return 签名值 
+     */  
+function getSignature($str, $key) {  
+    $signature = &quot;&quot;;  
+    if (function_exists(&apos;hash_hmac&apos;)) {  
+        $signature = base64_encode(hash_hmac(&quot;sha1&quot;, $str, $key, true));  
+    } else {  
+        $blocksize = 64;  
+        $hashfunc = &apos;sha1&apos;;  
+        if (strlen($key) &amp;gt; $blocksize) {  
+            $key = pack(&apos;H*&apos;, $hashfunc($key));  
+        }  
+        $key = str_pad($key, $blocksize, chr(0x00));  
+        $ipad = str_repeat(chr(0x36), $blocksize);  
+        $opad = str_repeat(chr(0x5c), $blocksize);  
+        $hmac = pack(  
+                &apos;H*&apos;, $hashfunc(  
+                        ($key ^ $opad) . pack(  
+                                &apos;H*&apos;, $hashfunc(  
+                                        ($key ^ $ipad) . $str  
+                                )  
+                        )  
+                )  
+        );  
+        $signature = base64_encode($hmac);  
+    }  
+    return $signature;  
+   }  
+
+class Response {
+    public $username = &quot;&quot;;
+    public $password = &quot;&quot;;
+    public $ttl = &quot;&quot;;
+    public $uris = array(&quot;&quot;);
+}
+</code></pre><p>?&gt;<br>5、拿nginx部署下，怎么部署自行百度</p>
+<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">六、测试</span></span></span></p>
+<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       部署成功后可在浏览器输入<a href="http://192.168.214.129:8080创建房间" target="_blank" rel="noopener">http://192.168.214.129:8080创建房间</a></span></span></span></p>
+<p>appRTCDemo连接也改成<span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;"><a href="http://192.168.214.129:8080" target="_blank" rel="noopener">http://192.168.214.129:8080</a></span></span></span>即可</p>
+<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">七、参考连接</span></span></span></p>
+<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       <a href="http://www.mamicode.com/info-detail-513556.html" target="_blank" rel="noopener">http://www.mamicode.com/info-detail-513556.html</a></span></span></span></p>
+<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       <a href="http://www.jianshu.com/p/c55ecf5a3fcf" target="_blank" rel="noopener">http://www.jianshu.com/p/c55ecf5a3fcf</a></span></span></span></p>
+<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       <a href="http://www.bubuko.com/infodetail-938737.html" target="_blank" rel="noopener">http://www.bubuko.com/infodetail-938737.html</a>l<br></span></span></span></p>
+<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">八、关于webrtc编译<br></span></span></span></p>
+<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       我只编译了android的版本，公司网速慢死，找了个国内下好的代码，分享到网盘了<a href="http://pan.baidu.com/s/1kUyNE55" target="_blank" rel="noopener">http://pan.baidu.com/s/1kUyNE55</a></span></span></span></p>
+<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       AppRTCDemo的工程源码连接:<a href="http://download.csdn.net/detail/s569646547/9451013" target="_blank" rel="noopener">AppRTCDemo工程源码</a></span></span></span></p>
+<p><span style="font-size: large;">       运行截图：</span></p>
+<p><span style="font-size: large;">       <img src="http://img.blog.csdn.net/20160302182354507?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQv/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center" alt=""></span></p>
+<p><div></div><br>&nbsp;</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/未分类//" class="article-tag-list-link color4">未分类</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2016/09/13/apprtcwebrtc-e6-9c-ac-e5-9c-b0-e6-90-ad-e5-bb-ba-e6-9c-8d-e5-8a-a1-e5-99-a8/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-teamtalk-ubuntu-e6-9c-8d-e5-8a-a1-e7-ab-af-e9-83-a8-e7-bd-b2" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2016/09/13/teamtalk-ubuntu-e6-9c-8d-e5-8a-a1-e7-ab-af-e9-83-a8-e7-bd-b2/">TeamTalk——ubuntu服务端部署</a>
+    </h1>
+  
+
+        
+        <a href="/2016/09/13/teamtalk-ubuntu-e6-9c-8d-e5-8a-a1-e7-ab-af-e9-83-a8-e7-bd-b2/" class="archive-article-date">
+  	<time datetime="2016-09-13T06:52:30.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-09-13</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p><span style="font-size: large;">这是第二次部署了，第一次在双系统Ubuntu上部署，这次准备在虚拟机上部署，所用版本Ubuntu 15.10 64位(14.04版本编译出很多问题，所以直接用最新版),这里要感谢蓝狐的教程</span><a href="http://www.bluefoxah.org/teamtalk/new_tt_deploy.html" target="_blank" rel="noopener"><span style="font-size: large;">http://www.bluefoxah.org/teamtalk/new_tt_deploy.html</span></a></p>
+<p><span style="font-size: large;">一、准本工作</span></p>
+<p><span style="font-size: large;">1、更新操作系统(非必须)<br></span></p>
+<p>sudo apt-get update</p>
+<p><span style="font-size: large;">2、删除已安装的软件</span></p>
+<p>mysql、nginx、php最好都用新版。<br>2.1安装mysql</p>
+<p>mysql版本5.6以上</p>
+<p>sudo apt-get autoremove –purge mysql-server-5.5</p>
+<p>sudo apt-get autoremove –purge mysql-client-5.5</p>
+<p>官网下载mysql5.6</p>
+<p><img src="http://write.blog.csdn.net/postedit/50157731" alt=""></p>
+<p>安装：</p>
+<p>sudo dpkg -i mysql-common_5.6.27-1ubuntu14.04_i386.deb mysql-community-client_5.6.27-1ubuntu14.04_i386.deb mysql-community-        server_5.6.27-1ubuntu14.04_i386.deb</p>
+<p>提示缺少 libaio1，安装libaio1</p>
+<p>sudo apt-get install libaio1;</p>
+<p>重新安装成功</p>
+<p>或者 sudo apt-get install mysql-server mysql-client libmysqlclient-dev</p>
+<p>导入sql脚本，进入TeamTalk-master/auto_setup/mariadb/conf/</p>
+<p>source /自己的目录/TeamTalk-master/auto_setup/mariadb/conf/ttopen.sql;</p>
+<p>2.2 安装php</p>
+<p>sudo apt-get install php5-fpm; sudo apt-get install php5-mysql;</p>
+<p>2.3 安装nginx</p>
+<p>如果先前安装了Apache2 先卸载，卸载方法同上</p>
+<p>官网下载最新为1.9.7，解压</p>
+<p>./configure –prefix=/usr/local/nginx    安装在/usr/local下</p>
+<p>提示缺少依赖包pcre</p>
+<p>sudo apt-get install libpcre3 libpcre3.dev</p>
+<p>重新configure提示缺少zlib</p>
+<p>sudo apt-get install zlib1g zlib1g.dev</p>
+<p>安装依赖 ssl</p>
+<p>sudo apt-get install libssl-dev</p>
+<p>重新configure，通过，编译安装nginx</p>
+<p>sudo make</p>
+<p>sudo make install</p>
+<p>启动   sudo  /usr/local/nginx/sbin/nginx</p>
+<p>2.4安装redis</p>
+<p>官网下载    3.0.5</p>
+<p>sudo make</p>
+<p>sudo make install</p>
+<p>启动  ./redis-server    为了省事我这里不写启动脚本了</p>
+<p>2.5 安装PB</p>
+<p>protobuf-2.6.1(teamtalk server源码目录下有)，安装</p>
+<p>./configure –prefix=/usr/local/protobuf</p>
+<p>sudo make</p>
+<p>sudo make install</p>
+<p><span style="font-size: large;">3编译源码</span></p>
+<p>3.1准备工作<br>进入  server/src目录</p>
+<p>sudo sh make_log4cxx.sh</p>
+<p>报错，手动安装log4cxx依赖apr，apr-util</p>
+<p>官网下载<a href="http://apr.apache.org/download.cgi" target="_blank" rel="noopener">http://apr.apache.org/download.cgi</a></p>
+<p>安装apr</p>
+<p>./configure –prefix=/usr/apr</p>
+<p>sudo make</p>
+<p>sudo make install</p>
+<p>安转apr-util</p>
+<p><div class="line number1 index0 alt2"><code>.`</code>/configure<code>--prefix=</code>/usr/apr-util<code>--with-apr=</code>/usr/apr`</div><br>sudo make</p>
+<p>sudo make install</p>
+<p>重新 sudo sh make_log4cxx.sh</p>
+<p>还报错打开  make_log4cxx.sh</p>
+<p>在build_log4cxx（）里修改apr与apr-util路径为刚才的安装路径</p>
+<p>重新 sudo sh make_log4cxx.sh，通过。</p>
+<p>sudo sh make_hredis.sh</p>
+<p>3.2 编译server</p>
+<p>sudo sh build_ubuntu.sh version 1.0.0</p>
+<p>缺少uuid的话安装</p>
+<p>sudo apt-get install uuid-dev</p>
+<p>编译成功后会在server目录下生成im-server-1.0.0压缩包</p>
+<p><span style="font-size: large;">  4、部署</span></p>
+<p>解压im-server-1.0.0 为了方便看日志将lib包下的log4cxx.properties复制到各个server目录下</p>
+<p>设置临时环境变量 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:自己的路径/im-server-1.0.0/lib</p>
+<p>各个server的配置文件按蓝狐的教程就行</p>
+<p>4.1db_proxy_server</p>
+<p>server启动顺序会有一定影响所以先启动db_proxy_server</p>
+<p>进入db_proxy_server</p>
+<p>../daeml db_proxy_server</p>
+<p>查看是否启动</p>
+<p>ps -ef|grep server</p>
+<p>发现没有启动成功，去看log日志提示无法链接到192.168.1.94的数据库上</p>
+<p>检查mysql的配置文件my.cnf发现bind-address监听的是127.0.0.1修改成本机ip，重启mysql</p>
+<p>我用的root用户，所以还得为root开启远程访问权限</p>
+<p>登录mysql，执行</p>
+<p>grant all on mysql.* to ‘root‘@’%’ identified by ‘你的root密码’;</p>
+<p>flush privileges;//提交修改</p>
+<p>退出mysql使用本机ip访问mysql</p>
+<p>mysql -h 192.168.0.94 -u root -p</p>
+<p>如果能访问说明设置成功</p>
+<p>重新启动db_proxy_server成功</p>
+<p>4.2route_server</p>
+<p>../daeml route_server</p>
+<p>4.3file_server</p>
+<p>../daeml file_server</p>
+<p>4.4msfs</p>
+<p>进入msfs目录</p>
+<p>拷贝msfs.conf.example一份，重命名为msfs.conf</p>
+<p>打开msfs.conf修改BaseDir=自己的目录/files，主要存放小文件照片，表情等</p>
+<p>../daeml msfs</p>
+<p>4.5login_server</p>
+<p>../daeml login_server</p>
+<p>4.6msg_server</p>
+<p>../daeml msg_server</p>
+<p>4.7http_msg_server</p>
+<p>../daeml http_msg_server</p>
+<p>4.8push_server</p>
+<p>../daeml push_server</p>
+<p><span style="font-size: large;"> 5.配置php服务器</span></p>
+<p><span style="font-size: large;">   </span><span style="font-size: large;">下面是我的nginx服务器的配置，nginx.conf</span></p>
+<p>&nbsp;</p>
+<p><pre class="html">user  www-data;<br>worker_processes  auto;</pre></p>
+<p>error_log  /自己的目录/logs/error.log crit;</p>
+<p>#error_log  logs/error.log  notice;</p>
+<p>#error_log  logs/error.log  info;</p>
+<p>pid        /usr/local/nginx/logs/nginx.pid;</p>
+<p>worker_rlimit_nofile 51200;<br>events {<br>    use epoll;<br>    worker_connections  51200;<br>    multi_accept on;<br>}</p>
+<p>http {<br>    include       mime.types;<br>    default_type  application/octet-stream;<br>    server_names_hash_bucket_size 128;<br>    client_header_buffer_size 32k;<br>    large_client_header_buffers 4 32k;<br>    client_max_body_size 50m;<br>    sendfile        on;<br>    tcp_nopush     on;<br>    keepalive_timeout 60;<br>    tcp_nodelay on;<br>    fastcgi_connect_timeout 300;<br>    fastcgi_send_timeout 300;<br>    fastcgi_read_timeout 300;<br>    fastcgi_buffer_size 64k;<br>    fastcgi_buffers 4 64k;<br>    fastcgi_busy_buffers_size 128k;<br>    fastcgi_temp_file_write_size 256k;<br>    gzip on;<br>    gzip_min_length  1k;<br>    gzip_buffers     4 16k;<br>    gzip_http_version 1.0;<br>    gzip_comp_level 2;<br>    gzip_types       text/plain application/x-javascript text/css application/xml;<br>    gzip_vary on;<br>    gzip_proxied        expired no-cache no-store private auth;<br>    gzip_disable        “MSIE [1-6].“;<br>    server_tokens off;<br>    log_format  access  ‘$remote_addr - $remote_user [$time_local] “$request” ‘<br>        ‘$status $body_bytes_sent “$http_referer” ‘<br>        ‘“$http_user_agent” $http_x_forwarded_for’;</p>
+<pre><code>server {
+    listen       80;
+    server_name  192.168.214.130;
+root   /自己的目录/www/teamtalk;
+    location ~ \.php($|/){
+        root   /自己的目录/www/teamtalk;
+        index  index.html index.htm index.php default.html default.htm default.php;
+        fastcgi_pass   unix:/var/run/php5-fpm.sock;//这里写自己php-fpm.conf  里listen的位置
+            fastcgi_index  index.php;
+            fastcgi_split_path_info ^(.+\.php)(.*)$;
+            fastcgi_param   PATH_INFO $fastcgi_path_info;
+            fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+            include        fastcgi_params;
+    }
+
+     location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+                {
+                        expires      30d;
+                }
+
+        location ~ .*\.(js|css)?$
+                {
+                        expires      12h;
+                }
+        if (!-e $request_filename) {
+            rewrite ^/(.*)$ /index.php/$1 last;
+            break;
+      }
+
+    #error_page  404              /404.html;
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   html;
+    }
+
+    # proxy the PHP scripts to Apache listening on 127.0.0.1:80
+    #
+    #location ~ \.php$ {
+    #    proxy_pass   http://127.0.0.1;
+    #}
+
+    # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+    #
+    #location ~ \.php$ {
+    #    root           html;
+    #    fastcgi_pass   127.0.0.1:9000;
+    #    fastcgi_index  index.php;
+    #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
+    #    include        fastcgi_params;
+    #}
+
+    # deny access to .htaccess files, if Apache&apos;s document root
+    # concurs with nginx&apos;s one
+    #
+    #location ~ /\.ht {
+    #    deny  all;
+    #}
+}
+
+# another virtual host using mix of IP-, name-, and port-based configuration
+#
+#server {
+#    listen       8000;
+#    listen       somename:8080;
+#    server_name  somename  alias  another.alias;
+
+#    location / {
+#        root   html;
+#        index  index.html index.htm;
+#    }
+#}
+
+# HTTPS server
+#
+#server {
+#    listen       443 ssl;
+#    server_name  localhost;
+
+#    ssl_certificate      cert.pem;
+#    ssl_certificate_key  cert.key;
+
+#    ssl_session_cache    shared:SSL:1m;
+#    ssl_session_timeout  5m;
+
+#    ssl_ciphers  HIGH:!aNULL:!MD5;
+#    ssl_prefer_server_ciphers  on;
+
+#    location / {
+#        root   html;
+#        index  index.html index.htm;
+#    }
+#}
+</code></pre><p>}<br><br>&nbsp;</p>
+<p>修改完后记得重启nginx。</p>
+<p>编译部署完成，如果所有server都启动了还是不能发消息的话，重新启动所有server再试一遍。</p>
+<p>编译好的文件<a href="http://download.csdn.net/detail/s569646547/9326617" target="_blank" rel="noopener">http://download.csdn.net/detail/s569646547/9326617</a></p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/未分类//" class="article-tag-list-link color4">未分类</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2016/09/13/teamtalk-ubuntu-e6-9c-8d-e5-8a-a1-e7-ab-af-e9-83-a8-e7-bd-b2/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-volley-e6-89-a9-e5-b1-95-e6-96-87-e4-bb-b6-e6-96-ad-e7-82-b9-e4-b8-8b-e8-bd-bd-ef-bc-88-e6-94-af-e6-8c-81-e4-b8-8b-e8-bd-bd-e8-bf-9b-e5-ba-a6-ef-bc-89" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2016/09/13/volley-e6-89-a9-e5-b1-95-e6-96-87-e4-bb-b6-e6-96-ad-e7-82-b9-e4-b8-8b-e8-bd-bd-ef-bc-88-e6-94-af-e6-8c-81-e4-b8-8b-e8-bd-bd-e8-bf-9b-e5-ba-a6-ef-bc-89/">Volley扩展——文件断点下载（支持下载进度）</a>
+    </h1>
+  
+
+        
+        <a href="/2016/09/13/volley-e6-89-a9-e5-b1-95-e6-96-87-e4-bb-b6-e6-96-ad-e7-82-b9-e4-b8-8b-e8-bd-bd-ef-bc-88-e6-94-af-e6-8c-81-e4-b8-8b-e8-bd-bd-e8-bf-9b-e5-ba-a6-ef-bc-89/" class="archive-article-date">
+  	<time datetime="2016-09-13T06:52:01.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-09-13</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>volley同样不适合大文件的下载，只能自己扩展了，我这里参考了Netroid,有兴趣的可以去分析下,文件下载模仿了图片的加载方式，添加了两个类 分别是FileDownloadRequest和FileDownloader。断点续传是根据http头里的Range 和Content-Range实现.</p>
+<p>Range用于请求头中，指定第一个字节的位置和最后一个字节的位置，一般格式：</p>
+<p>Range:(unit=first byte pos)-[last byte pos]</p>
+<p>Content-Range用于响应头，指定整个实体中的一部分的插入位置，他也指示了整个实体的长度。在服务器向客户返回一个部分响应，它必须描述响应覆盖的范围和整个实体长度。一般格式：</p>
+<p>Content-Range: bytes (unit first byte pos) - [last byte pos]/[entity legth]</p>
+<p>例如：</p>
+<p>Range: bytes=0-801       一般下载整个文件是 0-，没有后边的801</p>
+<p>Content-Range: bytes 2753525-41526127/41526128        斜杠后边的是文件总大小</p>
+<p>关键代码：</p>
+<p><pre class="html">public Map&lt;String, String&gt; getHeaders() throws AuthFailureError {<br>        Map&lt;String,String&gt; map = new HashMap&lt;String,String&gt;();<br>        map.put(“Range”, “bytes=” + mTemporaryFile.length() + “-“);<br>        return map;<br>    }</pre><br>&nbsp;</p>
+<p><pre class="html">public byte[] handleResponse(HttpResponse response, ResponseDelivery delivery) throws IOException, ServerError {<br>        // Content-Length might be negative when use HttpURLConnection because it default header Accept-Encoding is gzip,<br>        // we can force set the Accept-Encoding as identity in prepare() method to slove this problem but also disable gzip response.<br>        HttpEntity entity = response.getEntity();<br>        long fileSize = entity.getContentLength();<br>        if (fileSize &lt;= 0) {<br>            VolleyLog.d(“Response doesn’t present Content-Length!”);<br>        }</pre></p>
+<pre><code>    long downloadedSize = mTemporaryFile.length();
+    boolean isSupportRange = HttpUtils.isSupportRange(response);
+    if (isSupportRange) {
+        fileSize += downloadedSize;
+
+        // Verify the Content-Range Header, to ensure temporary file is part of the whole file.
+        // Sometime, temporary file length add response content-length might greater than actual file length,
+        // in this situation, we consider the temporary file is invalid, then throw an exception.
+        String realRangeValue = HttpUtils.getHeader(response, &quot;Content-Range&quot;);
+        Log.e(&quot;FileDownloadRequest&quot;,&quot;response header Content-Range:&quot; + realRangeValue);
+        // response Content-Range may be null when &quot;Range=bytes=0-&quot;
+        if (!TextUtils.isEmpty(realRangeValue)) {
+            String assumeRangeValue = &quot;bytes &quot; + downloadedSize + &quot;-&quot; + (fileSize - 1);
+            Log.e(&quot;FileDownloadRequest&quot;,&quot;assumeRangeValue:&quot; + assumeRangeValue);
+            if (TextUtils.indexOf(realRangeValue, assumeRangeValue) == -1) {
+                throw new IllegalStateException(
+                        &quot;The Content-Range Header is invalid Assume[&quot; + assumeRangeValue + &quot;] vs Real[&quot; + realRangeValue + &quot;], &quot; +
+                                &quot;please remove the temporary file [&quot; + mTemporaryFile + &quot;].&quot;);
+            }
+        }
+    }
+
+    // Compare the store file size(after download successes have) to server-side Content-Length.
+    // temporary file will rename to store file after download success, so we compare the
+    // Content-Length to ensure this request already download or not.
+    if (fileSize &amp;gt; 0 &amp;amp;&amp;amp; mStoreFile.length() == fileSize) {
+        // Rename the store file to temporary file, mock the download success. ^_^
+        mStoreFile.renameTo(mTemporaryFile);
+
+        // Deliver download progress.
+        delivery.postProgress(this, fileSize, fileSize);
+        return null;
+    }
+
+    RandomAccessFile tmpFileRaf = new RandomAccessFile(mTemporaryFile, &quot;rw&quot;);
+
+    // If server-side support range download, we seek to last point of the temporary file.
+    if (isSupportRange) {
+        tmpFileRaf.seek(downloadedSize);
+    } else {
+        // If not, truncate the temporary file then start download from beginning.
+        tmpFileRaf.setLength(0);
+        downloadedSize = 0;
+    }
+
+    try {
+        InputStream in = entity.getContent();
+        // Determine the response gzip encoding, support for HttpClientStack download.
+        if (HttpUtils.isGzipContent(response) &amp;amp;&amp;amp; !(in instanceof GZIPInputStream)) {
+            in = new GZIPInputStream(in);
+        }
+        byte[] buffer = new byte[6 * 1024]; // 6K buffer
+        int offset;
+
+        while ((offset = in.read(buffer)) != -1) {
+            tmpFileRaf.write(buffer, 0, offset);
+
+            downloadedSize += offset;
+            delivery.postProgress(this, fileSize, downloadedSize);
+
+            if (isCanceled()) {
+                delivery.postCancel(this);
+                break;
+            }
+        }
+    } finally {
+        try {
+            // Close the InputStream and release the resources by &quot;consuming the content&quot;.
+            if (entity != null) entity.consumeContent();
+        } catch (Exception e) {
+            // This can happen if there was an exception above that left the entity in
+            // an invalid state.
+            VolleyLog.v(&quot;Error occured when calling consumingContent&quot;);
+        }
+        tmpFileRaf.close();
+    }
+
+    return null;
+}&lt;/pre&gt;
+</code></pre><p>demo连接：<a href="http://download.csdn.net/detail/s569646547/9098291" target="_blank" rel="noopener">http://download.csdn.net/detail/s569646547/9098291</a></p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/未分类//" class="article-tag-list-link color4">未分类</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2016/09/13/volley-e6-89-a9-e5-b1-95-e6-96-87-e4-bb-b6-e6-96-ad-e7-82-b9-e4-b8-8b-e8-bd-bd-ef-bc-88-e6-94-af-e6-8c-81-e4-b8-8b-e8-bd-bd-e8-bf-9b-e5-ba-a6-ef-bc-89/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-volley-e6-89-a9-e5-b1-95-e6-96-87-e4-bb-b6-e4-b8-8a-e4-bc-a0-ef-bc-88-e6-94-af-e6-8c-81-e8-bf-9b-e5-ba-a6-e6-9d-a1-ef-bc-89" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2016/09/13/volley-e6-89-a9-e5-b1-95-e6-96-87-e4-bb-b6-e4-b8-8a-e4-bc-a0-ef-bc-88-e6-94-af-e6-8c-81-e8-bf-9b-e5-ba-a6-e6-9d-a1-ef-bc-89/">Volley扩展——文件上传（支持进度条）</a>
+    </h1>
+  
+
+        
+        <a href="/2016/09/13/volley-e6-89-a9-e5-b1-95-e6-96-87-e4-bb-b6-e4-b8-8a-e4-bc-a0-ef-bc-88-e6-94-af-e6-8c-81-e8-bf-9b-e5-ba-a6-e6-9d-a1-ef-bc-89/" class="archive-article-date">
+  	<time datetime="2016-09-13T06:51:32.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-09-13</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>volley是一个轻量级的开源网络通信框架，开源的好处就是可以自由定制自己需要的jar包。volley里网络通信时android2.3以上用的 HttpUrlConnection,2.3以下用的HttpClient，我做的改动只考虑了2.3以上，不支持2.3版本以下。 HttpUrlConnection默认传输数据是将数据全部写到内存中再发送到服务端，Volley就是采用默认的方式，这样在上传大文件时很容易就 out of memory，有一种解决办法是设置每次传输流的大小：</p>
+<p>已知文件大小：connection .setFixedLengthStreamingMode（long l）;</p>
+<p>不知道文件大小：connection.setChunkedStreamingMode(1024); //建议使用</p>
+<p>android的文件上传一般都是模拟表单，也可以直接socket传，我这里是集成了表单上传，下面是关键类：</p>
+<p><pre class="java">public class MultipartRequest extends Request&lt;String&gt; {<br>    private final Listener&lt;String&gt; mListener;<br>    private Map&lt;String, String&gt; headerMap;<br>    private Map&lt;String, String&gt; mParams;<br>    private FormFile[] files;<br>    private String BOUNDARY = “———7dc05dba8f3e19”;</pre></p>
+<pre><code>public MultipartRequest(String url, Listener&amp;lt;String&amp;gt; listener, Map&amp;lt;String, String&amp;gt; params, FormFile[] files) {
+    this(Method.POST, url, listener, params, files);
+}
+
+public MultipartRequest(int method, String url, Listener&amp;lt;String&amp;gt; listener, Map&amp;lt;String, String&amp;gt; params, FormFile[] files) {
+    super(method, url, listener);
+    mListener = listener;
+    mParams = params;
+    this.files = files;
+}
+
+@Override
+public Map&amp;lt;String, String&amp;gt; getHeaders() throws AuthFailureError {
+    headerMap = new HashMap&amp;lt;String, String&amp;gt;();
+    headerMap.put(&quot;Charset&quot;, &quot;UTF-8&quot;);
+    //Keep-Alive
+    headerMap.put(&quot;Connection&quot;, &quot;Keep-Alive&quot;);
+    headerMap.put(&quot;Content-Type&quot;, &quot;multipart/form-data; boundary=&quot; + BOUNDARY);
+    return headerMap;
+}
+
+@Override
+public byte[] getBody() throws AuthFailureError {
+    //传参数
+    StringBuilder sb = new StringBuilder();
+    for (Map.Entry&amp;lt;String, String&amp;gt; entry : mParams.entrySet()) {
+        // 构建表单字段内容
+        sb.append(&quot;--&quot;);
+        sb.append(BOUNDARY);
+        sb.append(&quot;\r\n&quot;);
+        sb.append(&quot;Content-Disposition: form-data; name=\&quot;&quot; + entry.getKey() + &quot;\&quot;\r\n\r\n&quot;);
+        sb.append(entry.getValue());
+        sb.append(&quot;\r\n&quot;);
+    }
+    return sb.toString().getBytes();
+}
+
+@Override
+public void handRequest(OutputStream out) {
+    DataOutputStream dos = (DataOutputStream) out;
+    try {
+        //发送文件数据
+        if (files != null) {
+            for (FormFile file : files) {
+                // 发送文件数据
+                StringBuilder split = new StringBuilder();
+                split.append(&quot;--&quot;);
+                split.append(BOUNDARY);
+                split.append(&quot;\r\n&quot;);
+                split.append(&quot;Content-Disposition: form-data;name=\&quot;&quot; + file.getParameterName() + &quot;\&quot;;filename=\&quot;&quot; + file.getFilname() + &quot;\&quot;\r\n&quot;);
+                split.append(&quot;Content-Type: &quot; + file.getContentType() + &quot;\r\n\r\n&quot;);
+                dos.write(split.toString().getBytes());
+                if (file.getInStream() != null) {
+                    byte[] buffer = new byte[1024];
+                    int len = -1;
+                    int count = 0;
+                    while ((len = file.getInStream().read(buffer)) != -1) {
+                        dos.write(buffer, 0, len);
+                        count += len;
+                        if (mListener != null) {
+                            mListener.onProgressChange(file.getFileSize(), count);
+                        }
+                    }
+                    count = 0;
+                    file.getInStream().close();
+                } else {
+                    dos.write(file.getData(), 0, file.getData().length);
+                }
+                dos.write(&quot;\r\n&quot;.getBytes());
+            }
+        }
+        dos.writeBytes(&quot;--&quot; + BOUNDARY + &quot;--\r\n&quot;);
+        dos.flush();
+    } catch (IOException e) {
+        mListener.onError(new VolleyError(e.toString()));
+        try {
+            dos.close();
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
+    }
+}
+
+@Override
+protected Response&amp;lt;String&amp;gt; parseNetworkResponse(NetworkResponse response) {
+    String parsed;
+    try {
+        parsed = new String(response.data, HttpHeaderParser.parseCharset(response.headers));
+    } catch (UnsupportedEncodingException e) {
+        parsed = new String(response.data);
+    }
+    return Response.success(parsed, HttpHeaderParser.parseCacheHeaders(response));
+}
+
+@Override
+protected void deliverResponse(String response) {
+    mListener.onSuccess(response);
+}
+
+@Override
+public void deliverError(VolleyError error) {
+    mListener.onError(error);
+}
+</code></pre><p>}<br>附上demo连接：<a href="http://download.csdn.net/detail/s569646547/9098291" target="_blank" rel="noopener">http://download.csdn.net/detail/s569646547/9098291</a></p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/未分类//" class="article-tag-list-link color4">未分类</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2016/09/13/volley-e6-89-a9-e5-b1-95-e6-96-87-e4-bb-b6-e4-b8-8a-e4-bc-a0-ef-bc-88-e6-94-af-e6-8c-81-e8-bf-9b-e5-ba-a6-e6-9d-a1-ef-bc-89/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-android-e6-a8-aa-e5-90-91-e6-bb-91-e5-8a-a8-e9-80-89-e6-8b-a9-e7-9a-84view" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2016/09/13/android-e6-a8-aa-e5-90-91-e6-bb-91-e5-8a-a8-e9-80-89-e6-8b-a9-e7-9a-84view/">android横向滑动选择的view</a>
+    </h1>
+  
+
+        
+        <a href="/2016/09/13/android-e6-a8-aa-e5-90-91-e6-bb-91-e5-8a-a8-e9-80-89-e6-8b-a9-e7-9a-84view/" class="archive-article-date">
+  	<time datetime="2016-09-13T06:51:06.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-09-13</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>做文字编辑，从网上找来的。</p>
+<p><pre>HorizontalScrollSelectView：</pre></p>
+<p><pre class="java">    public boolean mAlwaysOverrideTouch = true;<br>    protected ListAdapter mAdapter;<br>    private int mLeftViewIndex = -1;<br>    private int mRightViewIndex = 0;<br>    protected int mCurrentX;<br>    protected int mNextX;<br>    private int mMaxX = Integer.MAX_VALUE;<br>    private int mDisplayOffset = 0;<br>    protected Scroller mScroller;<br>    private GestureDetector mGesture;<br>    private Queue&lt;View&gt; mRemovedViewQueue = new LinkedList&lt;View&gt;();<br>    private OnItemSelectedListener mOnItemSelected;<br>    private OnItemClickListener mOnItemClicked;<br>    private OnItemLongClickListener mOnItemLongClicked;<br>    private OnScrollListener mScrollListener;<br>    /**</pre></p>
+<pre><code> * 选中item时图片
+ */
+private Drawable mDrawable;
+private boolean mDataChanged = false;
+private Context context;
+private boolean scrollerFalg1 = false;
+private boolean scrollerFalg2 = false;
+private int position = 0x7f020000;
+
+public HorizontalScrollSelectView(Context context, AttributeSet attrs) {
+    super(context, attrs);
+    this.context = context;
+    initView();
+}
+
+private synchronized void initView() {
+    mLeftViewIndex = -1;
+    mRightViewIndex = 0;
+    mDisplayOffset = 0;
+    mCurrentX = 0;
+    mNextX = 0;
+    mMaxX = Integer.MAX_VALUE;
+    mScroller = new Scroller(getContext());
+    mGesture = new GestureDetector(getContext(), mOnGesture);
+}
+
+public void setMScrollListener(OnScrollListener listener) {
+    mScrollListener = listener;
+}
+
+@Override
+public void setOnItemSelectedListener(OnItemSelectedListener listener) {
+    mOnItemSelected = listener;
+}
+
+@Override
+public void setOnItemClickListener(OnItemClickListener listener) {
+    mOnItemClicked = listener;
+}
+
+@Override
+public void setOnItemLongClickListener(OnItemLongClickListener listener) {
+    mOnItemLongClicked = listener;
+}
+
+/**
+ * 设置选中状态时的图片
+ *
+ * @param mDrawable
+ */
+public void setSelectBitmap(Drawable mDrawable) {
+    this.mDrawable = mDrawable;
+}
+
+private DataSetObserver mDataObserver = new DataSetObserver() {
+
+    @Override
+    public void onChanged() {
+        synchronized (HorizontalScrollSelectView.this) {
+            mDataChanged = true;
+        }
+        invalidate();
+        requestLayout();
+    }
+
+    @Override
+    public void onInvalidated() {
+        reset();
+        invalidate();
+        requestLayout();
+    }
+
+};
+
+@Override
+public ListAdapter getAdapter() {
+    return mAdapter;
+}
+
+@Override
+public View getSelectedView() {
+    //TODO: implement
+    return null;
+}
+
+@Override
+public void setAdapter(ListAdapter adapter) {
+    if (mAdapter != null) {
+        mAdapter.unregisterDataSetObserver(mDataObserver);
+    }
+    mAdapter = adapter;
+    mAdapter.registerDataSetObserver(mDataObserver);
+    reset();
+}
+
+private synchronized void reset() {
+    initView();
+    removeAllViewsInLayout();
+    requestLayout();
+}
+
+@Override
+public void setSelection(int position) {
+    //TODO: implement
+    int positionX = position * this.getWidth();
+    int maxWidth = this.getChildCount() * this.getWidth();
+    if (positionX &amp;lt;= 0) {
+        positionX = 0;
+    }
+    if (positionX &amp;gt; maxWidth) {
+        positionX = maxWidth;
+    }
+    scrollTo(positionX);
+}
+
+private void addAndMeasureChild(final View child, int viewPos) {
+    LayoutParams params = child.getLayoutParams();
+    if (params == null) {
+        params = new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT);
+    }
+
+    addViewInLayout(child, viewPos, params, true);
+    child.measure(MeasureSpec.makeMeasureSpec(getWidth(), MeasureSpec.AT_MOST),
+            MeasureSpec.makeMeasureSpec(getHeight(), MeasureSpec.AT_MOST));
+}
+
+@SuppressLint(&quot;NewApi&quot;)
+@Override
+protected synchronized void onLayout(boolean changed, int left, int top, int right, int bottom) {
+    super.onLayout(changed, left, top, right, bottom);
+
+    if (mAdapter == null) {
+        return;
+    }
+
+    if (mDataChanged) {
+        int oldCurrentX = mCurrentX;
+        initView();
+        removeAllViewsInLayout();
+        mNextX = oldCurrentX;
+        mDataChanged = false;
+    }
+
+    if (mScroller.computeScrollOffset()) {
+        int scrollx = mScroller.getCurrX();
+        mNextX = scrollx;
+    }
+</code></pre><p>//        if(mNextX &lt;= 0){<br>//            mNextX = 0;<br>//            mScroller.forceFinished(true);<br>//        }<br>//        if(mNextX &gt;= mMaxX) {<br>//            mNextX = mMaxX;<br>//            mScroller.forceFinished(true);<br>//        }</p>
+<pre><code>int dx = mCurrentX - mNextX;
+
+removeNonVisibleItems(dx);
+fillList(dx);
+positionItems(dx);
+</code></pre><p>//        Log.e(“onlayout”, “mLeftViewIndex”+(mLeftViewIndex+1));<br>        mCurrentX = mNextX;</p>
+<pre><code>    if (!mScroller.isFinished()) {
+        post(new Runnable() {
+            @Override
+            public void run() {
+                requestLayout();
+            }
+        });
+
+    } else {
+        if (scrollerFalg1 || (!scrollerFalg1 &amp;amp;&amp;amp; scrollerFalg2)) {
+            View chid = getChildAt(0);
+            if (chid != null) {
+                mDisplayOffset = 0;
+                positionItems(0);
+                if (mDrawable != null) {
+                    getChildAt(2).setBackground(mDrawable);
+                }
+                if (mScrollListener != null) {
+                    int position = (int) getChildAt(2).getTag(this.position);
+                    mScrollListener.onScrollSelectItem(this, position);
+                }
+            }
+
+        }
+    }
+
+}
+
+/**
+ * 获取屏幕宽度
+ *
+ * @param context
+ * @return
+ */
+public static int getSecreenWidth(Context context) {
+    DisplayMetrics dm = new DisplayMetrics();
+    dm = context.getResources().getDisplayMetrics();
+    int screenWidth = dm.widthPixels;
+    return screenWidth / 5;
+}
+
+private void fillList(final int dx) {
+    int edge = 0;
+    View child = getChildAt(0);
+    if (child != null) {
+        edge = child.getLeft();
+    }
+    fillListLeft(edge, dx);
+
+    edge = 0;
+    child = getChildAt(getChildCount() - 1);
+    if (child != null) {
+        edge = child.getRight();
+    }
+    fillListRight(edge, dx);
+
+}
+
+private void fillListRight(int rightEdge, final int dx) {
+    //&amp;amp;&amp;amp; mRightViewIndex &amp;lt; mAdapter.getCount()
+    while (rightEdge + dx &amp;lt; getWidth()) {
+        if (mRightViewIndex &amp;gt;= mAdapter.getCount()) {
+            mRightViewIndex = 0;
+        }
+        View child = mAdapter.getView(mRightViewIndex, mRemovedViewQueue.poll(), this);
+        child.setTag(position, mRightViewIndex);
+        addAndMeasureChild(child, -1);
+        rightEdge += child.getMeasuredWidth();
+</code></pre><p>//            if(mRightViewIndex == mAdapter.getCount()-1) {<br>//                mMaxX = mCurrentX + rightEdge - getWidth();<br>//            }<br>//<br>//            if (mMaxX &lt; 0) {<br>//                mMaxX = 0;<br>//            }<br>            mRightViewIndex++;<br>        }</p>
+<pre><code>}
+
+private void fillListLeft(int leftEdge, final int dx) {
+    //&amp;amp;&amp;amp; mLeftViewIndex &amp;gt;= 0
+    while (leftEdge + dx &amp;gt; 0) {
+        if (mLeftViewIndex &amp;lt;= -1) {
+            mLeftViewIndex = mAdapter.getCount() - 1;
+        }
+        View child = mAdapter.getView(mLeftViewIndex, mRemovedViewQueue.poll(), this);
+        child.setTag(position, mLeftViewIndex);
+        addAndMeasureChild(child, 0);
+        leftEdge -= child.getMeasuredWidth();
+        mLeftViewIndex--;
+        mDisplayOffset -= child.getMeasuredWidth();
+    }
+}
+
+private void removeNonVisibleItems(final int dx) {
+    View child = getChildAt(0);
+    while (child != null &amp;amp;&amp;amp; child.getRight() + dx &amp;lt;= 0) {
+        mDisplayOffset += child.getMeasuredWidth();
+        mRemovedViewQueue.offer(child);
+        removeViewInLayout(child);
+        mLeftViewIndex++;
+        if (mLeftViewIndex &amp;gt;= mAdapter.getCount()) {
+            mLeftViewIndex = 0;
+        }
+        child = getChildAt(0);
+
+    }
+
+    child = getChildAt(getChildCount() - 1);
+    while (child != null &amp;amp;&amp;amp; child.getLeft() + dx &amp;gt;= getWidth()) {
+        mRemovedViewQueue.offer(child);
+        removeViewInLayout(child);
+        mRightViewIndex--;
+        if (mRightViewIndex &amp;lt;= -1) {
+            mRightViewIndex = mAdapter.getCount() - 1;
+        }
+        child = getChildAt(getChildCount() - 1);
+    }
+}
+
+private void positionItems(final int dx) {
+    if (getChildCount() &amp;gt; 0) {
+        mDisplayOffset += dx;
+        int left = mDisplayOffset;
+        for (int i = 0; i &amp;lt; getChildCount(); i++) {
+            View child = getChildAt(i);
+            getChildAt(2).setBackground(null);
+            int childWidth = child.getMeasuredWidth();
+            child.layout(left, 0, left + childWidth, child.getMeasuredHeight());
+            left += childWidth + child.getPaddingRight();
+        }
+    }
+}
+
+public synchronized void scrollTo(int x) {
+    mScroller.startScroll(mNextX, 0, x - mNextX, 0);
+    requestLayout();
+}
+
+@Override
+public boolean dispatchTouchEvent(MotionEvent ev) {
+    boolean handled = super.dispatchTouchEvent(ev);
+    handled |= mGesture.onTouchEvent(ev);
+
+    switch (ev.getAction()) {
+        case MotionEvent.ACTION_UP:
+            scrollerFalg2 = true;
+            requestLayout();
+            break;
+        default:
+            break;
+    }
+    return handled;
+}
+
+protected boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
+                          float velocityY) {
+    synchronized (HorizontalScrollSelectView.this) {
+        //mNextX
+        mScroller.fling(mNextX, 0, (int) -velocityX, 0, Integer.MIN_VALUE, mMaxX, 0, 0);
+    }
+    requestLayout();
+    scrollerFalg1 = true;
+    return true;
+}
+
+protected boolean onDown(MotionEvent e) {
+    mScroller.forceFinished(true);
+    return true;
+}
+
+public interface OnScrollListener {
+    /**
+     * 互动过程中选中的item
+     *
+     * @param position
+     */
+    public void onScrollSelectItem(ViewGroup viewGroup, int position);
+
+}
+
+private OnGestureListener mOnGesture = new GestureDetector.SimpleOnGestureListener() {
+
+    @Override
+    public boolean onDown(MotionEvent e) {
+        return HorizontalScrollSelectView.this.onDown(e);
+    }
+
+    @Override
+    public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
+                           float velocityY) {
+        return HorizontalScrollSelectView.this.onFling(e1, e2, velocityX, velocityY);
+    }
+
+    @Override
+    public boolean onScroll(MotionEvent e1, MotionEvent e2,
+                            float distanceX, float distanceY) {
+
+        synchronized (HorizontalScrollSelectView.this) {
+            mNextX += (int) distanceX;
+        }
+        requestLayout();
+        scrollerFalg1 = false;
+        scrollerFalg2 = false;
+        return true;
+    }
+
+    @Override
+    public void onShowPress(MotionEvent e) {
+        super.onShowPress(e);
+    }
+
+    @Override
+    public boolean onSingleTapUp(MotionEvent e) {
+        Log.e(&quot;onSingleTapUp&quot;, &quot;mLeftViewIndex&quot; + (mLeftViewIndex + 1));
+</code></pre><p>//            scrollerFalg=true;<br>            return super.onSingleTapUp(e);<br>        }</p>
+<pre><code>    @Override
+    public boolean onSingleTapConfirmed(MotionEvent e) {
+        for (int i = 0; i &amp;lt; getChildCount(); i++) {
+            View child = getChildAt(i);
+            if (isEventWithinView(e, child)) {
+                if (mOnItemClicked != null) {
+                    mOnItemClicked.onItemClick(HorizontalScrollSelectView.this, child, mLeftViewIndex + 1 + i, mAdapter.getItemId(mLeftViewIndex + 1 + i));
+                }
+                if (mOnItemSelected != null) {
+                    mOnItemSelected.onItemSelected(HorizontalScrollSelectView.this, child, mLeftViewIndex + 1 + i, mAdapter.getItemId(mLeftViewIndex + 1 + i));
+                }
+                break;
+            }
+
+        }
+        return true;
+    }
+
+    @Override
+    public void onLongPress(MotionEvent e) {
+        int childCount = getChildCount();
+        for (int i = 0; i &amp;lt; childCount; i++) {
+            View child = getChildAt(i);
+            if (isEventWithinView(e, child)) {
+                if (mOnItemLongClicked != null) {
+                    mOnItemLongClicked.onItemLongClick(HorizontalScrollSelectView.this, child, mLeftViewIndex + 1 + i, mAdapter.getItemId(mLeftViewIndex + 1 + i));
+                }
+                break;
+            }
+
+        }
+    }
+
+    private boolean isEventWithinView(MotionEvent e, View child) {
+        Rect viewRect = new Rect();
+        int[] childPosition = new int[2];
+        child.getLocationOnScreen(childPosition);
+        int left = childPosition[0];
+        int right = left + child.getWidth();
+        int top = childPosition[1];
+        int bottom = top + child.getHeight();
+        viewRect.set(left, top, right, bottom);
+        return viewRect.contains((int) e.getRawX(), (int) e.getRawY());
+    }
+};&amp;lt;/span&amp;gt;&lt;/pre&gt;
+</code></pre><p><span style="font-size: large;">demo截图：</span></p>
+<p><span style="font-size: large;"><img src="http://img.blog.csdn.net/20150901162650565?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQv/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center" alt=""></span></p>
+<p><span style="font-size: large;">demo地址：<a href="http://download.csdn.net/detail/s569646547/9070919" target="_blank" rel="noopener">http://download.csdn.net/detail/s569646547/9070919</a></span></p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/未分类//" class="article-tag-list-link color4">未分类</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2016/09/13/android-e6-a8-aa-e5-90-91-e6-bb-91-e5-8a-a8-e9-80-89-e6-8b-a9-e7-9a-84view/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-android-e5-ba-94-e7-94-a8proguard-e6-b7-b7-e6-b7-86-e6-89-93-e5-8c-85" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2016/09/13/android-e5-ba-94-e7-94-a8proguard-e6-b7-b7-e6-b7-86-e6-89-93-e5-8c-85/">android应用proguard混淆打包</a>
+    </h1>
+  
+
+        
+        <a href="/2016/09/13/android-e5-ba-94-e7-94-a8proguard-e6-b7-b7-e6-b7-86-e6-89-93-e5-8c-85/" class="archive-article-date">
+  	<time datetime="2016-09-13T06:50:37.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-09-13</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p><span style="font-size: large;">android应用发布的时候一般需要对代码混淆打包，这里贴上我自己的proguard配置文件：</span></p>
+<p><pre class="java">-libraryjars libs/gson-2.2.4.jar   #项目里用到的第三方jar包<br>-libraryjars libs/httpmime-4.1.3.jar<br>-libraryjars libs/ImageLoader.jar<br>-libraryjars libs/libammsdk.jar<br>-libraryjars libs/mta-sdk-1.6.2.jar<br>-libraryjars libs/nineoldandroids-2.4.0.jar<br>-libraryjars libs/open_sdk_r4889.jar<br>-libraryjars libs/rebound-core.jar<br>-libraryjars libs/universal-image-loader-1.9.3.jar<br>-libraryjars libs/volley.jar<br>-libraryjars libs/weibosdkcore.jar</pre></p>
+<p>-optimizationpasses 5   # 指定代码的压缩级别<br>-dontusemixedcaseclassnames  # 是否使用大小写混合<br>-ignorewarning        # 忽略警告，避免打包时某些警告出现<br>-dontskipnonpubliclibraryclasses  #指定不去忽略非公共的库类<br>-dontoptimize  #不优化输入的类文件<br>-verbose   # 混淆时是否记录日志 </p>
+<p>-optimizations !code/simplification/arithmetic,!field/<em>,!class/merging/</em>   #混淆时采用的算法</p>
+<p>-keep public class <em> extends android.app.Activity   # 保持哪些类不被混淆<br>-keep public class </em> extends android.app.Application<br>-keep public class <em> extends android.app.Service<br>-keep public class </em> extends android.content.BroadcastReceiver<br>-keep public class <em> extends android.content.ContentProvider<br>-keep public class </em> extends android.app.backup.BackupAgentHelper<br>-keep public class <em> extends android.preference.Preference<br>-keep public class </em> extends android.support.v4.<strong><br>-keep public class com.android.vending.licensing.ILicensingService<br>-keep class com.sina.</strong>{<em>;}<br>-keep class com.google.gson.stream.** { </em>; }<br>-keep class com.csm.model.*<em> { </em>; }</p>
+<p>-dontwarn android.support.v4.<strong>   # 缺省proguard 会检查每一个引用是否正确,但是第三方库里面往往有些不会用到的类,没有正确引用。如果不配置的话,系统就会报错<br>-dontwarn android.annotation<br>-dontwarn org.apache.commons.net.</strong><br>-dontwarn android.webkit.WebView<br>-dontwarn com.umeng.<strong><br>-dontwarn com.tencent.weibo.sdk.</strong></p>
+<p>-keepclasseswithmembernames class * { #保持本地方法不被混淆<br>    native &lt;methods&gt;;<br>}</p>
+<p>-keepclasseswithmembers class * {  #保护指定的类和类的成员，但条件是所有指定的类和类成员是要存在。<br>    public &lt;init&gt;(android.content.Context, android.util.AttributeSet);<br>}</p>
+<p>-keepclasseswithmembers class * {<br>    public &lt;init&gt;(android.content.Context, android.util.AttributeSet, int);<br>}</p>
+<p>-keepclassmembers class <em> extends android.app.Activity { #保护指定类的成员<br>   public void </em>(android.view.View);<br>}</p>
+<p>-keepclassmembers enum * {   #保持枚举enum类不被混淆<br>    public static <strong>[] values();<br>    public static </strong> valueOf(java.lang.String);<br>}</p>
+<p>-keep class <em> implements android.os.Parcelable {  #保护继承Parcelable的类<br>  public static final android.os.Parcelable$Creator </em>;<br>}</p>
+<p>-keepattributes <em>Annotation</em>   #保护注解&lt;/span&gt;<br><span style="font-size: large;">下边附一篇比较详细的讲解：</span></p>
+<p><pre class="java">&lt;span style=”font-size:18px;”&gt;-include {filename}    从给定的文件中读取配置参数<br>-basedirectory {directoryname}    指定基础目录为以后相对的档案名称<br>-injars {class_path}    指定要处理的应用程序jar,war,ear和目录<br>-outjars {class_path}    指定处理完后要输出的jar,war,ear和目录的名称<br>-libraryjars {classpath}    指定要处理的应用程序jar,war,ear和目录所需要的程序库文件<br>-dontskipnonpubliclibraryclasses    指定不去忽略非公共的库类。<br>-dontskipnonpubliclibraryclassmembers    指定不去忽略包可见的库类的成员。</pre></p>
+<p>保留选项<br>-keep {Modifier} {class_specification}    保护指定的类文件和类的成员<br>-keepclassmembers {modifier} {class_specification}    保护指定类的成员，如果此类受到保护他们会保护的更好<br>-keepclasseswithmembers {class_specification}    保护指定的类和类的成员，但条件是所有指定的类和类成员是要存在。<br>-keepnames {class_specification}    保护指定的类和类的成员的名称（如果他们不会压缩步骤中删除）<br>-keepclassmembernames {class_specification}    保护指定的类的成员的名称（如果他们不会压缩步骤中删除）<br>-keepclasseswithmembernames {class_specification}    保护指定的类和类的成员的名称，如果所有指定的类成员出席（在压缩步骤之后）<br>-printseeds {filename}    列出类和类的成员-keep选项的清单，标准输出到给定的文件 </p>
+<p>压缩<br>-dontshrink    不压缩输入的类文件<br>-printusage {filename}<br>-whyareyoukeeping {class_specification}     </p>
+<p>优化<br>-dontoptimize    不优化输入的类文件<br>-assumenosideeffects {class_specification}    优化时假设指定的方法，没有任何副作用<br>-allowaccessmodification    优化时允许访问并修改有修饰符的类和类的成员 </p>
+<p>混淆<br>-dontobfuscate    不混淆输入的类文件<br>-printmapping {filename}<br>-applymapping {filename}    重用映射增加混淆<br>-obfuscationdictionary {filename}    使用给定文件中的关键字作为要混淆方法的名称<br>-overloadaggressively    混淆时应用侵入式重载<br>-useuniqueclassmembernames    确定统一的混淆类的成员名称来增加混淆<br>-flattenpackagehierarchy {package_name}    重新包装所有重命名的包并放在给定的单一包中<br>-repackageclass {package_name}    重新包装所有重命名的类文件中放在给定的单一包中<br>-dontusemixedcaseclassnames    是否使用大小写混写<br>-keepattributes {attribute_name,…}    保护给定的可选属性，例如LineNumberTable, LocalVariableTable, SourceFile, Deprecated, Synthetic, Signature, and </p>
+<p>InnerClasses.<br>-renamesourcefileattribute {string}    设置源文件中给定的字符串常量&lt;/span&gt;<br>&nbsp;</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/未分类//" class="article-tag-list-link color4">未分类</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2016/09/13/android-e5-ba-94-e7-94-a8proguard-e6-b7-b7-e6-b7-86-e6-89-93-e5-8c-85/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-android-e8-8e-b7-e5-8f-96-e6-89-8b-e6-9c-baip-e5-9c-b0-e5-9d-80wifi-e7-8a-b6-e6-80-81-e4-b8-8e-e9-9d-9ewifi-e7-8a-b6-e6-80-81" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2016/09/13/android-e8-8e-b7-e5-8f-96-e6-89-8b-e6-9c-baip-e5-9c-b0-e5-9d-80wifi-e7-8a-b6-e6-80-81-e4-b8-8e-e9-9d-9ewifi-e7-8a-b6-e6-80-81/">android获取手机ip地址wifi状态与非wifi状态</a>
+    </h1>
+  
+
+        
+        <a href="/2016/09/13/android-e8-8e-b7-e5-8f-96-e6-89-8b-e6-9c-baip-e5-9c-b0-e5-9d-80wifi-e7-8a-b6-e6-80-81-e4-b8-8e-e9-9d-9ewifi-e7-8a-b6-e6-80-81/" class="archive-article-date">
+  	<time datetime="2016-09-13T06:50:08.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-09-13</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p><span style="font-size: large;">方法一（只适合wifi状态）：</span></p>
+<p><pre class="java">public static String getIp(Context contxext) {<br>        WifiManager wm = (WifiManager) contxext.getSystemService(Context.WIFI_SERVICE);<br>        // 检查Wifi状态<br>        if (!wm.isWifiEnabled())<br>            wm.setWifiEnabled(true);<br>        WifiInfo wi = wm.getConnectionInfo();<br>        int ipAdd = wi.getIpAddress();<br>        String ip = intToIp(ipAdd);<br>        return ip;<br>    }</pre><br><span style="font-size: large;"> </span></p>
+<p><pre class="java">public static String intToIp(int i) {<br>        return (i &amp; 0xFF) + “.” + ((i &gt;&gt; 8) &amp; 0xFF) + “.” + ((i &gt;&gt; 16) &amp; 0xFF)</pre></p>
+<pre><code>            + &quot;.&quot; + (i &amp;gt;&amp;gt; 24 &amp;amp; 0xFF);
+}&lt;/pre&gt;
+</code></pre><p><span style="font-size: large;"><br>方法二（通用ipv4地址）：</span></p>
+<p><pre class="java">private String getIp() {<br>        try {<br>            for (Enumeration&lt;NetworkInterface&gt; en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements(); ) {<br>                NetworkInterface intf = en.nextElement();<br>                for (Enumeration&lt;InetAddress&gt; enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements(); ) {<br>                    InetAddress inetAddress = enumIpAddr.nextElement();<br>                    if (!inetAddress.isLoopbackAddress() &amp;&amp; inetAddress instanceof Inet4Address) {<br>                        return inetAddress.getHostAddress();<br>                    }<br>                }<br>            }<br>        } catch (SocketException ex) {<br>            ex.printStackTrace();<br>        }<br>        return null;<br>    }</pre><br><span style="font-size: large;"><br>方法三（通用ipv4与ipv6）<br></span></p>
+<p><pre class="java">/**</pre></p>
+<pre><code> * Get IP address from first non-localhost interface
+ *
+ * @param useIPv4 true=return ipv4, false=return ipv6
+ * @return address or empty string
+ */
+public static String getIPAddress(boolean useIPv4) {
+    try {
+        List&amp;lt;NetworkInterface&amp;gt; interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
+        for (NetworkInterface intf : interfaces) {
+            List&amp;lt;InetAddress&amp;gt; addrs = Collections.list(intf.getInetAddresses());
+            for (InetAddress addr : addrs) {
+                if (!addr.isLoopbackAddress()) {
+                    String sAddr = addr.getHostAddress().toUpperCase();
+                    boolean isIPv4 = InetAddressUtils.isIPv4Address(sAddr);
+                    if (useIPv4) {
+                        if (isIPv4)
+                            return sAddr;
+                    } else {
+                        if (!isIPv4) {
+                            int delim = sAddr.indexOf(&apos;%&apos;); // drop ip6 port suffix
+                            return delim &amp;lt; 0 ? sAddr : sAddr.substring(0, delim);
+                        }
+                    }
+                }
+            }
+        }
+    } catch (Exception ex) {
+    }
+    return &quot;&quot;;
+}&lt;/pre&gt;
+</code></pre><p>&nbsp;</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/未分类//" class="article-tag-list-link color4">未分类</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2016/09/13/android-e8-8e-b7-e5-8f-96-e6-89-8b-e6-9c-baip-e5-9c-b0-e5-9d-80wifi-e7-8a-b6-e6-80-81-e4-b8-8e-e9-9d-9ewifi-e7-8a-b6-e6-80-81/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-2015-vlc-e7-bc-96-e8-af-91" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2016/09/13/2015-vlc-e7-bc-96-e8-af-91/">2015——VLC编译</a>
+    </h1>
+  
+
+        
+        <a href="/2016/09/13/2015-vlc-e7-bc-96-e8-af-91/" class="archive-article-date">
+  	<time datetime="2016-09-13T06:48:48.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-09-13</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>一、工具准备</p>
+<blockquote>
+<p>需要的工具最好都用最新版的。官方文档：<a href="https://wiki.videolan.org/AndroidCompile" target="_blank" rel="noopener">https://wiki.videolan.org/AndroidCompile</a></p>
+<p>1、编译系统：Ubuntu 32位，我这里用的是ubuntukylin-14.04.2-desktop-i386，安装在vmware虚拟机上，这里注意必须用32位linux系统，我最开始用的64位始终编译不成功。</p>
+<p>2、sdk：官网下载最新的sdk，我这里用的是android-sdk-r24.3.3-linux.tar,解压后下载最新的build-tools，sdk5.0以上的（vlc使用了5.0以上才有的一些样式功能），以及最新的support library。</p>
+<p>3、ndk：我这里用的是android-ndk-r10e-linux-86.bin。</p>
+<p>4、jdk：我这里用的是jdk-8u51-linux-i586。<br>二、环境准备<br>1、安装必备的组件</p>
+<pre>sudo apt-get install automake ant autopoint cmake build-essential libtool \
+
+     patch pkg-config protobuf-compiler ragel subversion unzip git</pre>
+
+<p>2、设置环境变量jdk：</p>
+<pre class="html">    export JAVA_HOME=/home/shixq/tools/jdk1.8.0_51  
+
+    export JRE_HOME=${JAVA_HOME}/jre  
+
+    export CLASSPATH=.:${JAVA_HOME}/lib:${JRE_HOME}/lib  
+
+    export PATH=${JAVA_HOME}/bin:$PATH</pre>
+
+<p>sdk，ndk：</p>
+<pre class="html">    export ANDROID_SDK=/home/shixq/tools/android-sdk-linux
+
+    export ANDROID_NDK=/home/shixq/tools/android-ndk-r10e
+
+    export PATH=$PATH:$ANDROID_SDK/platform-tools:$ANDROID_SDK/tools
+
+    export ANDROID_ABI=armeabi-v7a</pre>
+
+<p>ANDROID_ABI要根据所使用的android平台决定，可以是x86，mips，不写的话默认是armeabi-v7a。<br>三、获取配置代码</p>
+<p><pre>git clone <a href="http://write.blog.csdn.net/postedit/47951189" target="_blank" rel="noopener">git://git.videolan.org/vlc-ports/android.git</a></pre></p>
+<p>会在当前目录生成一个android目录。</p>
+<p><br>四、开始编译<br>进入到android目录，执 行./compile.sh,脚本会自动下载vlc源码及编译所需的插件，网络良好的情况下下载还是比较快的，中间遇到的大部分问题都是因为被墙的原因导 致下载失败，如果你有vpn的话会顺利很多，否则的话只能手动去网上下了，总之就是哪个下失败，就手动下载下来放到对应目录下，然后接 着./compile.sh。这个过程可能重复很多次，要有耐心。中间还遇到个gettext版本问题，系统自带版本是0.18.3（使用 gettext –version查看版本）,编译配置文件所需版本要大于0.18.3，本来想手动升级下，从网上下载了0.19.3安装后没想到还是0.18.3，后 来根据这篇文章解决：<a href="http://stackoverflow.com/questions/30259182/build-vlc-for-" target="_blank" rel="noopener">http://stackoverflow.com/questions/30259182/build-vlc-for-</a> android-project-failed-on-ubuntu-12-04。</p>
+<pre><code>&lt;span class=&quot;pun&quot;&gt;./&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;vlc&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;configure&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;ac&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;lit&quot;&gt;439&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;AM_GNU_GETTEXT_VERSION&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;([&lt;/span&gt;&lt;span class=&quot;lit&quot;&gt;0.19&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;lit&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;])&lt;/span&gt;
+
+&lt;span class=&quot;pun&quot;&gt;./&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;vlc&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;contrib&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;contrib&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;android&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;arm&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;linux&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;androideabi&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;gnutls&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;configure&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;ac&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;lit&quot;&gt;148&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;AM_GNU_GETTEXT_VERSION&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;([&lt;/span&gt;&lt;span class=&quot;lit&quot;&gt;0.18&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;])&lt;/span&gt;
+
+&lt;span class=&quot;pun&quot;&gt;./&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;vlc&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;contrib&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;contrib&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;android&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;arm&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;linux&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;androideabi&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;libgpg&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;error&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;configure&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;ac&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;lit&quot;&gt;158&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;AM_GNU_GETTEXT_VERSION&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;([&lt;/span&gt;&lt;span class=&quot;lit&quot;&gt;0.19&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;lit&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;])&lt;/span&gt;
+</code></pre><p>就是手动将配置文件改成0.18.3。编译成功截图：</p>
+<p><img src="http://img.blog.csdn.net/20150826115845692" alt=""><br>五、运行程序<br>编译完后的apk文件在android/vlc-android/build/outputs下，程序运行需要的文件</p>
+<p><img src="http://write.blog.csdn.net/postedit/47951189" alt=""></p>
+<h4 id="libvlc-和vlc-android是主要的源代码，因为是用gradle构建的所以用eclipse的话，就比较悲催了，需要手动引入support下的-design和v7下的appcompat和cardview，还有个互相引用的问题，哎，所以还是用androd-studio或者idea来运行程序吧。"><a href="#libvlc-和vlc-android是主要的源代码，因为是用gradle构建的所以用eclipse的话，就比较悲催了，需要手动引入support下的-design和v7下的appcompat和cardview，还有个互相引用的问题，哎，所以还是用androd-studio或者idea来运行程序吧。" class="headerlink" title="libvlc 和vlc-android是主要的源代码，因为是用gradle构建的所以用eclipse的话，就比较悲催了，需要手动引入support下的 design和v7下的appcompat和cardview，还有个互相引用的问题，哎，所以还是用androd studio或者idea来运行程序吧。"></a><span id="Example_on_Ubuntu" class="mw-headline">libvlc 和vlc-android是主要的源代码，因为是用gradle构建的所以用eclipse的话，就比较悲催了，需要手动引入support下的 design和v7下的appcompat和cardview，还有个互相引用的问题，哎，所以还是用androd studio或者idea来运行程序吧。</span></h4><p></p>
+<p>附上资源连接：<a href="http://download.csdn.net/detail/s569646547/9049283" target="_blank" rel="noopener">http://download.csdn.net/detail/s569646547/9049283</a></p>
+</blockquote>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/未分类//" class="article-tag-list-link color4">未分类</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2016/09/13/2015-vlc-e7-bc-96-e8-af-91/">展开全文 >></a>
         </p>
       
 
@@ -1169,7 +2046,7 @@ public String getId() {
   
   
     <nav id="page-nav">
-      <a class="extend prev" rel="prev" href="/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><span class="space">&hellip;</span><a class="page-number" href="/page/6/">6</a><a class="extend next" rel="next" href="/page/3/">Next &raquo;</a>
+      <a class="extend prev" rel="prev" href="/">&laquo; Prev</a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/3/">Next &raquo;</a>
     </nav>
   
 

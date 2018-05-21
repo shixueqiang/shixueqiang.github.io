@@ -151,1781 +151,203 @@
           <div id="js-content" class="content-ll">
             
   
-    <article id="post-ffmpeg-e8-a7-a3-e7-a0-81-e6-9c-ac-e5-9c-b0-e8-a7-86-e9-a2-91-e6-92-ad-e6-94-be-ef-bc-88-e9-85-8d-e5-90-88sdl2-ef-bc-89-e4-b8-80" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-android-e7-9a-84-e6-b6-88-e6-81-af-e5-be-aa-e7-8e-af-e7-ba-bf-e7-a8-8b-e9-97-b4-e9-80-9a-e4-bf-a1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2016/09/13/ffmpeg-e8-a7-a3-e7-a0-81-e6-9c-ac-e5-9c-b0-e8-a7-86-e9-a2-91-e6-92-ad-e6-94-be-ef-bc-88-e9-85-8d-e5-90-88sdl2-ef-bc-89-e4-b8-80/">FFmpeg解码本地视频播放（配合SDL2）一</a>
+      <a class="article-title" href="/2016/09/13/android-e7-9a-84-e6-b6-88-e6-81-af-e5-be-aa-e7-8e-af-e7-ba-bf-e7-a8-8b-e9-97-b4-e9-80-9a-e4-bf-a1/">Android的消息循环——线程间通信</a>
     </h1>
   
 
         
-        <a href="/2016/09/13/ffmpeg-e8-a7-a3-e7-a0-81-e6-9c-ac-e5-9c-b0-e8-a7-86-e9-a2-91-e6-92-ad-e6-94-be-ef-bc-88-e9-85-8d-e5-90-88sdl2-ef-bc-89-e4-b8-80/" class="archive-article-date">
-  	<time datetime="2016-09-13T06:56:08.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-09-13</time>
+        <a href="/2016/09/13/android-e7-9a-84-e6-b6-88-e6-81-af-e5-be-aa-e7-8e-af-e7-ba-bf-e7-a8-8b-e9-97-b4-e9-80-9a-e4-bf-a1/" class="archive-article-date">
+  	<time datetime="2016-09-13T06:47:26.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-09-13</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>一、FFmpeg编译</p>
-<p>1、下载源码  <a href="https://github.com/FFmpeg/FFmpeg" target="_blank" rel="noopener">https://github.com/FFmpeg/FFmpeg</a></p>
-<p>2、编译环境 ubuntu14.04 32位</p>
-<p>2、编译脚本  arm.sh</p>
-<p><pre class="html">#!/bin/bash<br>export TMPDIR=$HOME/ffmpeg_temp<br>NDK=$HOME/tools/android-ndk-r10e<br>SYSROOT=$NDK/platforms/android-16/arch-arm/<br>TOOLCHAIN=$NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86<br>CPU=arm<br>PREFIX=$HOME/ffmpeg-so/arm/<br>ADDI_CFLAGS=”-marm”<br>function build_one<br>{<br>./configure \<br>–prefix=$PREFIX \<br>–enable-shared \<br>–disable-static \<br>–disable-doc \<br>–disable-ffmpeg \<br>–disable-ffplay \<br>–disable-ffprobe \<br>–disable-ffserver \<br>–disable-doc \<br>–disable-symver \<br>–enable-small \<br>–cross-prefix=$TOOLCHAIN/bin/arm-linux-androideabi- \<br>–target-os=linux \<br>–arch=arm \<br>–enable-cross-compile \<br>–sysroot=$SYSROOT \<br>–extra-cflags=”-Os -fpic $ADDI_CFLAGS” \<br>–extra-ldflags=”$ADDI_LDFLAGS” \<br>$ADDITIONAL_CONFIGURE_FLAG<br>make clean<br>make<br>make install<br>}<br>build_one</pre><br>x86版本只需要修改</p>
-<p><pre class="html">export TMPDIR=$HOME/ffmpeg_temp</pre></p>
-<p>NDK=$HOME/tools/android-ndk-r10e<br>SYSROOT=$NDK/platforms/android-16/arch-x86/<br>TOOLCHAIN=$NDK/toolchains/x86-4.9/prebuilt/linux-x86</p>
-<p>CPU=x86<br>PREFIX=$HOME/ffmpeg-so/x86/<br>3、将上边的编译脚本放到ffmpeg根目录执行，生成的so在上边PREFIX目录下。</p>
-<p>二、SDL</p>
-<p>1、下载最新源码2.0.4，android工程是android-project，导入到eclipse中。</p>
-<p>2、sdl的jni中最终会调用main方法，为了方便，直接在sdl的android   demo中修改，我的项目目录</p>
-<p><img src="http://img.blog.csdn.net/20160518112021065?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQv/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center" alt=""></p>
-<p>include放ffmpeg的头文件</p>
-<p>3、创建main.c文件</p>
-<p><pre class="html">#include &lt;stdlib.h&gt;</pre></p>
-<p>#include &lt;stdio.h&gt;</p>
-<p>#include &lt;time.h&gt;</p>
-<p>#include &lt;jni.h&gt;</p>
-<p>#include “libavcodec/avcodec.h”</p>
-<p>#include “libavformat/avformat.h”</p>
-<p>#include “libswscale/swscale.h”</p>
-<p>#include “SDL.h”</p>
-<p>#include &lt;android/log.h&gt;</p>
-<p>#define LOG_TAG “SDL”</p>
-<p>#define SDL_AUDIO_BUFFER_SIZE 1024</p>
-<p>#define MAX_AUDIO_FRAME_SIZE 192000</p>
-<p>#define MAX_AUDIOQ_SIZE (5 <em> 16 </em> 1024)</p>
-<p>#define MAX_VIDEOQ_SIZE (5 <em> 256 </em> 1024)</p>
-<p>#define FF_ALLOC_EVENT   (SDL_USEREVENT)</p>
-<p>#define FF_REFRESH_EVENT (SDL_USEREVENT + 1)</p>
-<p>#define FF_QUIT_EVENT (SDL_USEREVENT + 2)</p>
-<p>#define VIDEO_PICTURE_QUEUE_SIZE 1</p>
-<p>#define LOGE(…)  <strong>android_log_print(ANDROID_LOG_ERROR,LOG_TAG,</strong>VA_ARGS__)</p>
-<p>typedef struct Sprite {<br>    SDL_Texture* texture;<br>    Uint16 w;<br>    Uint16 h;<br>} Sprite;</p>
-<p>typedef struct VideoDecoder {<br>    AVFormatContext <em>pFormatCtx;<br>    AVCodec </em>codec;<br>    AVCodecContext <em>codec_ctx;<br>    struct SwsContext </em>convert_ctx;<br>    AVFrame <em>pFrame;<br>    AVFrame </em>pFrameYUV;<br>    AVPacket <em>packet;<br>    SDL_Window </em>screen;<br>    SDL_Renderer <em>renderer;<br>    SDL_Texture </em>bmp;<br>    SDL_Rect rect;<br>    SDL_Event event;<br>} VideoDecoder;</p>
-<p>typedef struct AudioDecoder {<br>    AVCodec <em>codec;<br>    AVCodecContext </em>codec_ctx;<br>    AVPacket <em>aPacket;<br>    AVFrame </em>aFrame;<br>    AVPacketList <em>first_pkt, </em>last_pkt;<br>    int nb_packets;<br>    int size;<br>    SDL_mutex <em>mutex;<br>    SDL_cond </em>cond;<br>    SDL_AudioSpec desired, obtained; //SDL_OpenAudio需要传递的参数，1期望的参数2实际音频设备的参数，一般传空就好<br>} AudioDecoder;<br>int quit = 0;<br>static void av_log_callback(void <em>ptr, int level, const char </em>fmt, __va_list vl) {<br>    static char line[1024] = { 0 };<br>    vsnprintf(line, sizeof(line), fmt, vl);<br>//    LOGE(“av_log_callback : %s”, line);<br>}</p>
-<p>JNIEXPORT jint JNI_OnLoad(JavaVM <em>vm, void </em>reserved) {<br>    av_register_all();<br>    av_log_set_callback(av_log_callback);</p>
-<pre><code>return JNI_VERSION_1_4;
-</code></pre><p>}<br>/<em> Adapted from SDL’s testspriteminimal.c </em>/<br>Sprite LoadSprite(const char<em> file, SDL_Renderer</em> renderer) {<br>    Sprite result;<br>    result.texture = NULL;<br>    result.w = 0;<br>    result.h = 0;</p>
-<pre><code>SDL_Surface* temp;
-
-/* Load the sprite image */
-temp = SDL_LoadBMP(file);
-if (temp == NULL) {
-    fprintf(stderr, &quot;Couldn&apos;t load %s: %s\n&quot;, file, SDL_GetError());
-    return result;
-}
-result.w = temp-&amp;gt;w;
-result.h = temp-&amp;gt;h;
-
-/* Create texture from the image */
-result.texture = SDL_CreateTextureFromSurface(renderer, temp);
-if (!result.texture) {
-    fprintf(stderr, &quot;Couldn&apos;t create texture: %s\n&quot;, SDL_GetError());
-    SDL_FreeSurface(temp);
-    return result;
-}
-SDL_FreeSurface(temp);
-
-return result;
-</code></pre><p>}</p>
-<p>void draw(SDL_Window<em> window, SDL_Renderer</em> renderer, const Sprite sprite) {<br>    int w, h;<br>    SDL_GetWindowSize(window, &amp;w, &amp;h);<br>    SDL_Rect destRect = { w / 2 - sprite.w / 2, h / 2 - sprite.h / 2, sprite.w,<br>            sprite.h };<br>    /<em> Blit the sprite onto the screen </em>/<br>    SDL_RenderCopy(renderer, sprite.texture, NULL, &amp;destRect);<br>}</p>
-<p>void decodeVideo() {</p>
-<p>}</p>
-<p>int decodeAudio(AudioDecoder <em>audioCtx, AVPacket </em>pkt) {<br>    LOGE(“decodeAudio()=========start%d”,audioCtx-&gt;aPacket-&gt;size);<br>    AVPacketList <em>pkt1;<br>    if (av_dup_packet(pkt) &lt; 0) {<br>        return -1;<br>    }<br>    LOGE(“decodeAudio()=========start1”);<br>    pkt1 = (AVPacketList </em>) av_malloc(sizeof(AVPacketList));<br>    if (!pkt1)<br>        return -1;<br>    pkt1-&gt;pkt = <em>pkt;<br>    pkt1-&gt;next = NULL;<br>    SDL_LockMutex(audioCtx-&gt;mutex);<br>    LOGE(“decodeAudio()=========start2”);<br>    if (!audioCtx-&gt;last_pkt)<br>        audioCtx-&gt;first_pkt = pkt1;<br>    else<br>        audioCtx-&gt;last_pkt-&gt;next = pkt1;<br>    audioCtx-&gt;last_pkt = pkt1;<br>    audioCtx-&gt;nb_packets++;<br>    audioCtx-&gt;size += pkt1-&gt;pkt.size;<br>    SDL_CondSignal(audioCtx-&gt;cond);<br>    SDL_UnlockMutex(audioCtx-&gt;mutex);<br>    LOGE(“decodeAudio()=========end”);<br>    return 0;<br>}<br>int audio_decode_frame(AudioDecoder </em>audioCtx, uint8_t <em>audio_buf, int buf_size) {<br>    LOGE(“start audio_decode_frame==========”);<br>    AVPacket </em>pkt = audioCtx-&gt;aPacket;<br>    if(pkt == NULL)<br>        LOGE(“start audio_decode_frame==========pkt == NULL”);<br>    uint8_t <em>audio_pkt_data = NULL;<br>    int audio_pkt_size = 0;<br>    int len1, data_size;<br>    int framFinish = 0;<br>    LOGE(“start audio_decode_frame==========1 packet size:%d”,pkt-&gt;size);<br>    audioCtx-&gt;aFrame = av_frame_alloc();<br>    for (;;) {<br>        while (audio_pkt_size &gt; 0) {<br>            data_size = buf_size;<br>            LOGE(“start audio_decode_frame==========2”);<br>            len1 = avcodec_decode_audio4(audioCtx-&gt;codec_ctx, audioCtx-&gt;aFrame,<br>                    &amp;framFinish, audioCtx-&gt;aPacket);<br>            LOGE(“decode audio …”);<br>            if (len1 &lt; 0) { /</em> if error, skip frame <em>/<br>                audio_pkt_size = 0;<br>                break;<br>            }<br>            audio_pkt_data += len1;<br>            audio_pkt_size -= len1;<br>            if (data_size &lt;= 0) { /</em> No data yet, get more frames <em>/<br>                continue;<br>            } /</em> We have data, return it and come back for more later */<br>            return data_size;<br>        }<br>        if (pkt-&gt;data)<br>            av_free_packet(pkt);<br>        if (quit) {<br>            return -1;<br>        }<br>        if (packet_queue_get(&amp;audioCtx, 1) &lt; 0) {<br>            return -1;<br>        }<br>        LOGE(“audio_decode_frame ======aaaaaa”);<br>        audio_pkt_data = pkt-&gt;data;<br>        audio_pkt_size = pkt-&gt;size;<br>    }<br>    return 0;<br>}</p>
-<p>int packet_queue_get(AudioDecoder <em>q, int block) {<br>    AVPacket </em>pkt = q-&gt;aPacket;<br>    AVPacketList <em>pkt1;<br>    int ret;<br>    SDL_LockMutex(q-&gt;mutex);<br>    for (;;) {<br>        if (quit) {<br>            ret = -1;<br>            break;<br>        }<br>        pkt1 = q-&gt;first_pkt;<br>        if (pkt1) {<br>            q-&gt;first_pkt = pkt1-&gt;next;<br>            if (!q-&gt;first_pkt)<br>                q-&gt;last_pkt = NULL;<br>            q-&gt;nb_packets–;<br>            q-&gt;size -= pkt1-&gt;pkt.size;
-            </em>pkt = pkt1-&gt;pkt;<br>            av_free(pkt1);<br>            ret = 1;<br>            break;<br>        } else if (!block) {<br>            ret = 0;<br>            break;<br>        } else {<br>            SDL_CondWait(q-&gt;cond, q-&gt;mutex);<br>        }<br>    }<br>    SDL_UnlockMutex(q-&gt;mutex);<br>    return ret;<br>}<br>void audio_callback(void <em>userdata, Uint8 </em>stream, int len) {<br>    AudioDecoder <em>audioCtx = (AudioDecoder </em>) userdata;<br>    int len1, audio_size;<br>    uint8_t audio_buf[(MAX_AUDIO_FRAME_SIZE <em> 3) / 2];<br>    unsigned int audio_buf_size = 0;<br>    unsigned int audio_buf_index = 0;<br>    while (len &gt; 0) {<br>        if (audio_buf_index &gt;= audio_buf_size) { /</em> We have already sent all our data; get more <em>/<br>            LOGE(“audio_decode_frame audioCtx-&gt;pkt:”);<br>            audio_size = audio_decode_frame(audioCtx, audio_buf,<br>                    sizeof(audio_buf));<br>            if (audio_size &lt; 0) { /</em> If error, output silence <em>/<br>                audio_buf_size = 1024; // arbitrary?<br>                memset(audio_buf, 0, audio_buf_size);<br>            } else {<br>                audio_buf_size = audio_size;<br>            }<br>            audio_buf_index = 0;<br>        }<br>        len1 = audio_buf_size - audio_buf_index;<br>        if (len1 &gt; len)<br>            len1 = len;<br>        memcpy(stream, (uint8_t </em>) audio_buf + audio_buf_index, len1);<br>        len -= len1;<br>        stream += len1;<br>        audio_buf_index += len1;<br>    }<br>}</p>
-<p>int main(int argc, char <em>argv[]) {<br>    VideoDecoder </em>videoCtx = (VideoDecoder <em>) av_mallocz(sizeof(VideoDecoder));<br>    AudioDecoder </em>audioCtx = (AudioDecoder *) av_mallocz(sizeof(AudioDecoder));<br>    audioCtx-&gt;mutex = SDL_CreateMutex();<br>    audioCtx-&gt;cond = SDL_CreateCond();<br>    LOGE(“SDL init”);<br>    //init sdl2.0<br>    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {<br>        LOGE(“Could not initialize SDL - %s\n”, SDL_GetError());<br>        exit(-1);<br>    }<br>    LOGE(“SDL init success”);</p>
-<pre><code>// Open video file
-if (avformat_open_input(&amp;amp;videoCtx-&amp;gt;pFormatCtx, argv[1], NULL, NULL) != 0)
-    return -1;
-LOGE(&quot;open video file success.&quot;);
-//获取视频流信息
-if (avformat_find_stream_info(videoCtx-&amp;gt;pFormatCtx, NULL) &amp;lt; 0)
-    return -1;
-LOGE(&quot;stream info success.&quot;);
-// Dump information about file onto standard error
-av_dump_format(videoCtx-&amp;gt;pFormatCtx, 0, argv[1], 0);
-
-int videoIndex = -1, audioIndex = -1, i = 0;
-//获取视频数据的下标值
-for (i = 0; i &amp;lt; videoCtx-&amp;gt;pFormatCtx-&amp;gt;nb_streams; i++) {
-    if (videoCtx-&amp;gt;pFormatCtx-&amp;gt;streams[i]-&amp;gt;codec-&amp;gt;codec_type
-            == AVMEDIA_TYPE_VIDEO) {
-        videoIndex = i;
-    }
-    if (videoCtx-&amp;gt;pFormatCtx-&amp;gt;streams[i]-&amp;gt;codec-&amp;gt;codec_type
-            == AVMEDIA_TYPE_AUDIO) {
-        audioIndex = i;
-    }
-}
-if (videoIndex == -1 || audioIndex == -1)
-    return -1;
-LOGE(&quot;拿到解码环境videoIndex:%d,audioIndex:%d&quot;,videoIndex,audioIndex);
-//拿到音频解码环境
-audioCtx-&amp;gt;codec_ctx = videoCtx-&amp;gt;pFormatCtx-&amp;gt;streams[audioIndex]-&amp;gt;codec;
-audioCtx-&amp;gt;desired.freq = audioCtx-&amp;gt;codec_ctx-&amp;gt;sample_rate;
-audioCtx-&amp;gt;desired.format = AUDIO_S16SYS;
-audioCtx-&amp;gt;desired.channels = audioCtx-&amp;gt;codec_ctx-&amp;gt;channels;
-audioCtx-&amp;gt;desired.silence = 0;
-audioCtx-&amp;gt;desired.samples = SDL_AUDIO_BUFFER_SIZE;
-audioCtx-&amp;gt;desired.callback = audio_callback;
-audioCtx-&amp;gt;desired.userdata = audioCtx;
-
-if (SDL_OpenAudio(&amp;amp;audioCtx-&amp;gt;desired, &amp;amp;audioCtx-&amp;gt;obtained) &amp;lt; 0) {
-    LOGE(&quot;SDL_OpenAudio: %s/n&quot;, SDL_GetError());
-    return -1;
-}
-//寻找合适的音频解码器
-audioCtx-&amp;gt;codec = avcodec_find_decoder(audioCtx-&amp;gt;codec_ctx-&amp;gt;codec_id);
-if (audioCtx-&amp;gt;codec == NULL) {
-    LOGE(&quot;Unsupported audio codec! \n&quot;);
-    return -1;
-}
-//打开音频解码器
-if (avcodec_open2(audioCtx-&amp;gt;codec_ctx, audioCtx-&amp;gt;codec, NULL) &amp;lt; 0) {
-    LOGE(&quot;Couldn&apos;t open audio codec.\n&quot;);
-    return -1;
-}
-
-//解码音频先注掉，有问题待修复
-</code></pre><p>//    SDL_PauseAudio(0);</p>
-<pre><code>//拿到视频解码环境
-videoCtx-&amp;gt;codec_ctx = videoCtx-&amp;gt;pFormatCtx-&amp;gt;streams[videoIndex]-&amp;gt;codec;
-//寻找合适的视频解码器
-videoCtx-&amp;gt;codec = avcodec_find_decoder(videoCtx-&amp;gt;codec_ctx-&amp;gt;codec_id);
-if (videoCtx-&amp;gt;codec == NULL) {
-    LOGE(&quot;Unsupported video codec! \n&quot;);
-    return -1;
-}
-//打开视频解码器
-if (avcodec_open2(videoCtx-&amp;gt;codec_ctx, videoCtx-&amp;gt;codec, NULL) &amp;lt; 0) {
-    LOGE(&quot;Couldn&apos;t open video codec.\n&quot;);
-    return -1;
-}
-//AVFrame 获取帧指针
-videoCtx-&amp;gt;pFrame = av_frame_alloc();
-videoCtx-&amp;gt;pFrameYUV = av_frame_alloc();
-
-if (videoCtx-&amp;gt;pFrameYUV == NULL)
-    return -1;
-
-LOGE(&quot;create screen&quot;);
-videoCtx-&amp;gt;screen = SDL_CreateWindow(&quot;my window&quot;,
-SDL_WINDOWPOS_UNDEFINED,
-SDL_WINDOWPOS_UNDEFINED, videoCtx-&amp;gt;codec_ctx-&amp;gt;width,
-        videoCtx-&amp;gt;codec_ctx-&amp;gt;height,
-        SDL_WINDOW_FULLSCREEN | SDL_WINDOW_OPENGL);
-videoCtx-&amp;gt;renderer = SDL_CreateRenderer(videoCtx-&amp;gt;screen, -1, 0);
-LOGE(&quot;create screen success&quot;);
-if (!videoCtx-&amp;gt;screen) {
-    LOGE(&quot;SDL: could not set video mode - exiting\n&quot;);
-    exit(1);
-}
-videoCtx-&amp;gt;bmp = SDL_CreateTexture(videoCtx-&amp;gt;renderer, SDL_PIXELFORMAT_YV12,
-        SDL_TEXTUREACCESS_STREAMING, videoCtx-&amp;gt;codec_ctx-&amp;gt;width,
-        videoCtx-&amp;gt;codec_ctx-&amp;gt;height);
-videoCtx-&amp;gt;convert_ctx = sws_getContext(videoCtx-&amp;gt;codec_ctx-&amp;gt;width,
-        videoCtx-&amp;gt;codec_ctx-&amp;gt;height, videoCtx-&amp;gt;codec_ctx-&amp;gt;pix_fmt,
-        videoCtx-&amp;gt;codec_ctx-&amp;gt;width, videoCtx-&amp;gt;codec_ctx-&amp;gt;height,
-        AV_PIX_FMT_YUV420P,
-        SWS_BILINEAR,
-        NULL,
-        NULL,
-        NULL);
-LOGE(&quot;计算YUV420P所需的内存大小&quot;);
-//计算YUV420P所需的内存大小,并分配内存
-int numBytes = avpicture_get_size(AV_PIX_FMT_YUV420P,
-        videoCtx-&amp;gt;codec_ctx-&amp;gt;width, videoCtx-&amp;gt;codec_ctx-&amp;gt;height);
-uint8_t* buffer = (uint8_t *) av_malloc(numBytes * sizeof(uint8_t));
-
-avpicture_fill((AVPicture *) videoCtx-&amp;gt;pFrameYUV, buffer,
-        AV_PIX_FMT_YUV420P, videoCtx-&amp;gt;codec_ctx-&amp;gt;width,
-        videoCtx-&amp;gt;codec_ctx-&amp;gt;height);
-LOGE(&quot;Read frames and save first five frames to disk&quot;);
-// Read frames and save first five frames to disk
-i = 0;
-videoCtx-&amp;gt;rect.x = 0;
-videoCtx-&amp;gt;rect.y = 0;
-videoCtx-&amp;gt;rect.w = videoCtx-&amp;gt;codec_ctx-&amp;gt;width;
-videoCtx-&amp;gt;rect.h = videoCtx-&amp;gt;codec_ctx-&amp;gt;height;
-int frameFinished = 0;
-LOGE(&quot;开始解码&quot;);
-int y_size = videoCtx-&amp;gt;codec_ctx-&amp;gt;width * videoCtx-&amp;gt;codec_ctx-&amp;gt;height;
-videoCtx-&amp;gt;packet = (AVPacket *) malloc(sizeof(AVPacket));
-av_new_packet(videoCtx-&amp;gt;packet, y_size);
-while (av_read_frame(videoCtx-&amp;gt;pFormatCtx, videoCtx-&amp;gt;packet) &amp;gt;= 0) {
-    // Is this a packet from the video stream?
-</code></pre><p>//        LOGE(“Is this a packet from the video stream :%d”,videoCtx-&gt;packet-&gt;stream_index);<br>        if (videoCtx-&gt;packet-&gt;stream_index == videoIndex) {<br>            // Decode video frame<br>            avcodec_decode_video2(videoCtx-&gt;codec_ctx, videoCtx-&gt;pFrame,<br>                    &amp;frameFinished, videoCtx-&gt;packet);<br>//            LOGE(“Did we get a video frame”);<br>            // Did we get a video frame?<br>            if (frameFinished) {<br>                LOGE(“解码一帧成功”);<br>                sws_scale(videoCtx-&gt;convert_ctx,<br>                        (uint8_t const <em> const </em>) videoCtx-&gt;pFrame-&gt;data,<br>                        videoCtx-&gt;pFrame-&gt;linesize, 0,<br>                        videoCtx-&gt;codec_ctx-&gt;height, videoCtx-&gt;pFrameYUV-&gt;data,<br>                        videoCtx-&gt;pFrameYUV-&gt;linesize);<br>                //计算yuv一行数据占的字节数<br>                SDL_UpdateTexture(videoCtx-&gt;bmp, &amp;videoCtx-&gt;rect,<br>                        videoCtx-&gt;pFrameYUV-&gt;data[0],<br>                        videoCtx-&gt;pFrameYUV-&gt;linesize[0]);<br>                SDL_RenderClear(videoCtx-&gt;renderer);<br>                SDL_RenderCopy(videoCtx-&gt;renderer, videoCtx-&gt;bmp,<br>                        &amp;videoCtx-&gt;rect, &amp;videoCtx-&gt;rect);<br>                SDL_RenderPresent(videoCtx-&gt;renderer);<br>            }<br>            SDL_Delay(50);<br>            // Free the packet that was allocated by av_read_frame<br>            av_free_packet(videoCtx-&gt;packet);<br>        } else if (videoCtx-&gt;packet-&gt;stream_index == audioIndex) {<br>//            LOGE(“Did we get a audio frame”);<br>            decodeAudio(audioCtx, videoCtx-&gt;packet);<br>        } else {<br>            av_free_packet(videoCtx-&gt;packet);<br>        }</p>
-<pre><code>    SDL_PollEvent(&amp;amp;videoCtx-&amp;gt;event);
-    switch (videoCtx-&amp;gt;event.type) {
-    case SDL_QUIT:
-        quit = 1;
-        SDL_Quit();
-        exit(0);
-        break;
-    default:
-        break;
-    }
-}
-
-SDL_DestroyTexture(videoCtx-&amp;gt;bmp);
-// Free the YUV frame
-av_free(videoCtx-&amp;gt;pFrame);
-av_free(videoCtx-&amp;gt;pFrameYUV);
-// Close the codec
-avcodec_close(videoCtx-&amp;gt;codec_ctx);
-// Close the video file
-avformat_close_input(&amp;amp;videoCtx-&amp;gt;pFormatCtx);
-free(videoCtx);
-
-//        SDL_Window *window;
-//        SDL_Renderer *renderer;
-//
-//        if (SDL_CreateWindowAndRenderer(0, 0, 0, &amp;amp;window, &amp;amp;renderer) &amp;lt; 0)
-//            exit(2);
-//
-//        Sprite sprite = LoadSprite(&quot;image.bmp&quot;, renderer);
-//        if (sprite.texture == NULL)
-//            exit(2);
-
-/* Main render loop */
-//    Uint8 done = 0;
-//    SDL_Event event;
-//    while (!done) {
-//        /* Check for events */
-//        while (SDL_PollEvent(&amp;amp;event)) {
-//            if (event.type == SDL_QUIT || event.type == SDL_KEYDOWN
-//                    || event.type == SDL_FINGERDOWN) {
-//                done = 1;
-//            }
-//        }
-//            /* Draw a gray background */
-//            SDL_SetRenderDrawColor(renderer, 0xA0, 0xA0, 0xA0, 0xFF);
-//            SDL_RenderClear(renderer);
-//
-//            draw(window, renderer, sprite);
-//
-//            /* Update the screen! */
-//            SDL_RenderPresent(renderer);
-//
-//            SDL_Delay(10);
-//    }
-return 0;
-</code></pre><p>}<br><br>目前只解码了视频，音频尚有问题，Android.mk</p>
-<p><pre class="html">LOCAL_PATH := $(call my-dir)</pre></p>
-<p>include $(CLEAR_VARS)<br>LOCAL_MODULE:= avcodec-prebuilt-armeabi<br>LOCAL_SRC_FILES:= ../ffmpeg/arm/lib/libavcodec-57.so<br>include $(PREBUILT_SHARED_LIBRARY)</p>
-<p>include $(CLEAR_VARS)<br>LOCAL_MODULE:= avdevice-prebuilt-armeabi<br>LOCAL_SRC_FILES:= ../ffmpeg/arm/lib/libavdevice-57.so<br>include $(PREBUILT_SHARED_LIBRARY)</p>
-<p>include $(CLEAR_VARS)<br>LOCAL_MODULE:= avfilter-prebuilt-armeabi<br>LOCAL_SRC_FILES:= ../ffmpeg/arm/lib/libavfilter-6.so<br>include $(PREBUILT_SHARED_LIBRARY)</p>
-<p>include $(CLEAR_VARS)<br>LOCAL_MODULE:= avformat-prebuilt-armeabi<br>LOCAL_SRC_FILES:= ../ffmpeg/arm/lib/libavformat-57.so<br>include $(PREBUILT_SHARED_LIBRARY)</p>
-<p>include $(CLEAR_VARS)<br>LOCAL_MODULE :=  avutil-prebuilt-armeabi<br>LOCAL_SRC_FILES := ../ffmpeg/arm/lib/libavutil-55.so<br>include $(PREBUILT_SHARED_LIBRARY)</p>
-<p>include $(CLEAR_VARS)<br>LOCAL_MODULE := swresample-prebuilt-armeabi<br>LOCAL_SRC_FILES := ../ffmpeg/arm/lib/libswresample-2.so<br>include $(PREBUILT_SHARED_LIBRARY)</p>
-<p>include $(CLEAR_VARS)<br>LOCAL_MODULE := swscale-prebuilt-armeabi<br>LOCAL_SRC_FILES := ../ffmpeg/arm/lib/libswscale-4.so<br>include $(PREBUILT_SHARED_LIBRARY)</p>
-<p>include $(CLEAR_VARS)</p>
-<p>LOCAL_MODULE := main</p>
-<p>SDL_PATH := ../SDL</p>
-<p>LOCAL_C_INCLUDES := $(LOCAL_PATH)/$(SDL_PATH)/include<br>LOCAL_C_INCLUDES += -L$(SYSROOT)/usr/include<br>LOCAL_C_INCLUDES += $(LOCAL_PATH)/../ffmpeg/arm/include</p>
-<h1 id="Add-your-application-source-files-here…"><a href="#Add-your-application-source-files-here…" class="headerlink" title="Add your application source files here…"></a>Add your application source files here…</h1><p>LOCAL_SRC_FILES := $(SDL_PATH)/src/main/android/SDL_android_main.c \<br>    main.c</p>
-<p>LOCAL_SHARED_LIBRARIES := SDL2 \<br>             avcodec-prebuilt-armeabi \<br>                         avdevice-prebuilt-armeabi \<br>                         avfilter-prebuilt-armeabi \<br>                         avformat-prebuilt-armeabi \<br>                         avutil-prebuilt-armeabi \<br>                         swresample-prebuilt-armeabi \<br>                         swscale-prebuilt-armeabi</p>
-<p>LOCAL_LDLIBS := -lGLESv1_CM -lGLESv2 -llog</p>
-<p>include $(BUILD_SHARED_LIBRARY)<br><br>SDLActivity里边修改</p>
-<p><pre class="html">protected String[] getLibraries() {<br>        return new String[] {<br>            “avcodec-57”,<br>            “avdevice-57”,<br>            “avfilter-6”,<br>            “avformat-57”,<br>            “avutil-55”,<br>            “swresample-2”,<br>            “swscale-4”,<br>            “SDL2”,<br>            // “SDL2_image”,<br>            // “SDL2_mixer”,<br>            // “SDL2_net”,<br>            // “SDL2_ttf”,<br>            “main”<br>        };<br>    }</pre></p>
-<p><pre class="html">//我直接传了个sd卡里边的一个视频<br>protected String[] getArguments() {<br>        return new String[]{Environment.getExternalStorageDirectory() + File.separator + “hello.flv”};<br>    }</pre><br>编译运行<br><img src="http://img.blog.csdn.net/20160518112113396?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQv/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center" alt=""></p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/未分类//" class="article-tag-list-link color4">未分类</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2016/09/13/ffmpeg-e8-a7-a3-e7-a0-81-e6-9c-ac-e5-9c-b0-e8-a7-86-e9-a2-91-e6-92-ad-e6-94-be-ef-bc-88-e9-85-8d-e5-90-88sdl2-ef-bc-89-e4-b8-80/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-qt-e8-a7-a3-e5-8e-8b-e7-bc-a9zlib-e5-92-8cquazip-e7-9a-84-e4-bd-bf-e7-94-a8" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2016/09/13/qt-e8-a7-a3-e5-8e-8b-e7-bc-a9zlib-e5-92-8cquazip-e7-9a-84-e4-bd-bf-e7-94-a8/">QT解压缩zlib和quazip的使用</a>
-    </h1>
-  
-
-        
-        <a href="/2016/09/13/qt-e8-a7-a3-e5-8e-8b-e7-bc-a9zlib-e5-92-8cquazip-e7-9a-84-e4-bd-bf-e7-94-a8/" class="archive-article-date">
-  	<time datetime="2016-09-13T06:55:30.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-09-13</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>首先我的开发环境是windows10，qtvs2015，vs2015。</p>
-<p>一、zlib的编译</p>
-<p>1、官网下载最新的zlib源码，最新的是1.2.8</p>
-<p>2、用vs自带的命令行工具（编译32位的dll选x86，64位的选x64）<span id="Label3">进入到zlib根目录，执行 nmake -f win32/Makefile.msc ,在根目录下生成：zlib.lib(静态库)  zdll.lib(动态库的导入库)  zlib1.dll(动态库) 。必要的头文件有zlib.h和zconf.h</span>。</p>
-<p>二、quazip的编译</p>
-<p>1、quazip是zlib的封装库，下载源码后用QT打开，编译需要依赖zlib库，右键项目添加库选外部库就好。我添加后在.pro文件末尾会生成下面配置,注意编译64位的quazip，使用的zlib也必须是64位的</p>
-<p><pre class="html">win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../zlib64/ -lzdll</pre></p>
-<p>else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../zlib64/ -lzdll</p>
-<p>else:unix: LIBS += -L$$PWD/../zlib64/ -lzdll</p>
-<p>INCLUDEPATH += $$PWD/../zlib64</p>
-<p>DEPENDPATH += $$PWD/../zlib64<br>&nbsp;</p>
-<p>INCLUDEPATH是头文件路径</p>
-<p>2、右键项目构建会生成quazip.lib和quazip.dll，注意zlib和quazip的默认字符集都是ANSI，在调用的文件的字符集也必须是ANSI，否则编译不过,使用utf-8的话，都必须是utf-8.</p>
-<p>三、使用</p>
-<p>1、使用时同样需要添加外部库zlib和quazip，字符集需要和dll一样，下面是一段解压缩代码</p>
-<p><pre class="html">bool extract(const QString&amp; in_file_path, const QString&amp; out_file_path)<br>{</pre></p>
-<pre><code>QuaZip archive(in_file_path);
-if (!archive.open(QuaZip::mdUnzip))
-    return false;
-
-QString path = out_file_path;
-if (!path.endsWith(&quot;/&quot;) &amp;amp;&amp;amp; !out_file_path.endsWith(&quot;\\&quot;))
-    path += &quot;/&quot;;
-
-QDir dir(out_file_path);
-if (!dir.exists())
-    dir.mkpath(out_file_path);
-
-for( bool f = archive.goToFirstFile(); f; f = archive.goToNextFile() )
-{
-    QString filePath = archive.getCurrentFileName();
-    QuaZipFile zFile(archive.getZipName(), filePath);
-    zFile.open(QIODevice::ReadOnly );
-    QByteArray ba = zFile.readAll();
-    zFile.close();
-
-    if (filePath.endsWith(&quot;/&quot;))
-    {
-        dir.mkpath(filePath);
-    }
-    else
-    {
-        QFile dstFile(path + filePath);
-        if (!dstFile.open(QIODevice::WriteOnly))
-            return false;
-        dstFile.write(ba);
-        dstFile.close();
-    }
-}
-return true;
-</code></pre><p>}<br>2、构建运行，新版QT运行需要拷贝qtvs2015下的plugins下的platforms文件夹到debug或release里边运行，还需要zlib1.dll和quazip.dll放到生成的exe同级目录下。运行没反应的话检查防火墙和杀毒。</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/未分类//" class="article-tag-list-link color4">未分类</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2016/09/13/qt-e8-a7-a3-e5-8e-8b-e7-bc-a9zlib-e5-92-8cquazip-e7-9a-84-e4-bd-bf-e7-94-a8/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-qt-e8-a7-a3-e5-8e-8b-e7-bc-a9zlib-e5-92-8cquazip-e7-9a-84-e4-bd-bf-e7-94-a8-1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2016/09/13/qt-e8-a7-a3-e5-8e-8b-e7-bc-a9zlib-e5-92-8cquazip-e7-9a-84-e4-bd-bf-e7-94-a8-1/">QT解压缩zlib和quazip的使用</a>
-    </h1>
-  
-
-        
-        <a href="/2016/09/13/qt-e8-a7-a3-e5-8e-8b-e7-bc-a9zlib-e5-92-8cquazip-e7-9a-84-e4-bd-bf-e7-94-a8-1/" class="archive-article-date">
-  	<time datetime="2016-09-13T06:55:30.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-09-13</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>首先我的开发环境是windows10，qtvs2015，vs2015。</p>
-<p>一、zlib的编译</p>
-<p>1、官网下载最新的zlib源码，最新的是1.2.8</p>
-<p>2、用vs自带的命令行工具（编译32位的dll选x86，64位的选x64）<span id="Label3">进入到zlib根目录，执行 nmake -f win32/Makefile.msc ,在根目录下生成：zlib.lib(静态库)  zdll.lib(动态库的导入库)  zlib1.dll(动态库) 。必要的头文件有zlib.h和zconf.h</span>。</p>
-<p>二、quazip的编译</p>
-<p>1、quazip是zlib的封装库，下载源码后用QT打开，编译需要依赖zlib库，右键项目添加库选外部库就好。我添加后在.pro文件末尾会生成下面配置,注意编译64位的quazip，使用的zlib也必须是64位的</p>
-<p><pre class="html">win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../zlib64/ -lzdll</pre></p>
-<p>else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../zlib64/ -lzdll</p>
-<p>else:unix: LIBS += -L$$PWD/../zlib64/ -lzdll</p>
-<p>INCLUDEPATH += $$PWD/../zlib64</p>
-<p>DEPENDPATH += $$PWD/../zlib64<br>&nbsp;</p>
-<p>INCLUDEPATH是头文件路径</p>
-<p>2、右键项目构建会生成quazip.lib和quazip.dll，注意zlib和quazip的默认字符集都是ANSI，在调用的文件的字符集也必须是ANSI，否则编译不过,使用utf-8的话，都必须是utf-8.</p>
-<p>三、使用</p>
-<p>1、使用时同样需要添加外部库zlib和quazip，字符集需要和dll一样，下面是一段解压缩代码</p>
-<p><pre class="html">bool extract(const QString&amp; in_file_path, const QString&amp; out_file_path)<br>{</pre></p>
-<pre><code>QuaZip archive(in_file_path);
-if (!archive.open(QuaZip::mdUnzip))
-    return false;
-
-QString path = out_file_path;
-if (!path.endsWith(&quot;/&quot;) &amp;amp;&amp;amp; !out_file_path.endsWith(&quot;\\&quot;))
-    path += &quot;/&quot;;
-
-QDir dir(out_file_path);
-if (!dir.exists())
-    dir.mkpath(out_file_path);
-
-for( bool f = archive.goToFirstFile(); f; f = archive.goToNextFile() )
-{
-    QString filePath = archive.getCurrentFileName();
-    QuaZipFile zFile(archive.getZipName(), filePath);
-    zFile.open(QIODevice::ReadOnly );
-    QByteArray ba = zFile.readAll();
-    zFile.close();
-
-    if (filePath.endsWith(&quot;/&quot;))
-    {
-        dir.mkpath(filePath);
-    }
-    else
-    {
-        QFile dstFile(path + filePath);
-        if (!dstFile.open(QIODevice::WriteOnly))
-            return false;
-        dstFile.write(ba);
-        dstFile.close();
-    }
-}
-return true;
-</code></pre><p>}<br>2、构建运行，新版QT运行需要拷贝qtvs2015下的plugins下的platforms文件夹到debug或release里边运行，还需要zlib1.dll和quazip.dll放到生成的exe同级目录下。运行没反应的话检查防火墙和杀毒。</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/未分类//" class="article-tag-list-link color4">未分类</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2016/09/13/qt-e8-a7-a3-e5-8e-8b-e7-bc-a9zlib-e5-92-8cquazip-e7-9a-84-e4-bd-bf-e7-94-a8-1/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-apprtcwebrtc-e6-9c-ac-e5-9c-b0-e6-90-ad-e5-bb-ba-e6-9c-8d-e5-8a-a1-e5-99-a8-1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2016/09/13/apprtcwebrtc-e6-9c-ac-e5-9c-b0-e6-90-ad-e5-bb-ba-e6-9c-8d-e5-8a-a1-e5-99-a8-1/">apprtc(webrtc) 本地搭建服务器</a>
-    </h1>
-  
-
-        
-        <a href="/2016/09/13/apprtcwebrtc-e6-9c-ac-e5-9c-b0-e6-90-ad-e5-bb-ba-e6-9c-8d-e5-8a-a1-e5-99-a8-1/" class="archive-article-date">
-  	<time datetime="2016-09-13T06:53:44.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-09-13</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p><span style="font-size: large;">这两天测试了下webrtc的效果，不知道是不是手机比较渣，画面并不是很清晰，先来说说服务器的部署。部署环境ubuntu14.04 32位。<br></span></p>
-<p><span style="font-size: large;">一、服务器组成</span></p>
-<p><span style="font-size: large;">      1、AppRTC 房间服务器  <a href="https://github.com/webrtc/apprtc" target="_blank" rel="noopener">https://github.com/webrtc/apprtc</a></span></p>
-<p><span style="font-size: large;">      2、Collider  信令服务器  上边源码里自带</span></p>
-<p><span style="font-size: large;">      3、coTurn   穿透服务器   <a href="https://github.com/coturn/coturn" target="_blank" rel="noopener">https://github.com/coturn/coturn</a></span></p>
-<p><span style="font-size: large;">      4、需要自己实现coTurn连接信息接口，主要返回用户名、密码和turn配置信息，通常叫做TURN REST API,不实现这个接口的话AppRTCDemo连不上服务器，浏览器访问的话可以正常访问。</span></p>
-<p><span style="font-size: large;">二、AppRTC房间服务器</span></p>
-<p><span style="font-size: large;">      1、下载代码</span></p>
-<p><span style="font-size: large;">      2、安装依赖</span></p>
-<p><span style="font-size: large;">            sudo apt-get install nodejs</span></p>
-<p><span style="font-size: large;">            sudo npm install -g npm</span></p>
-<p><span style="font-size: large;">            sudo apt-get install nodejs-legacy</span></p>
-<p><span style="font-size: large;">            sudo npm -g install grunt-cli</span></p>
-<p><span style="font-size: large;">            切换到源码目录</span></p>
-<p><span style="font-size: large;">            cd apprtc-master</span></p>
-<p><span style="font-size: large;">            npm install</span></p>
-<p><span style="font-size: large;">            sudo apt-get install python-webtest</span></p>
-<p><span style="font-size: large;">            grunt build</span></p>
-<p><span style="font-size: large;">            编译之后会多出out目录</span></p>
-<p><span style="font-size: large;">            运行还依赖 Google App Engine SDK for  Python <a href="https://cloud.google.com/appengine/downloads#Google_App_Engine_SDK_for_Python" target="_blank" rel="noopener">需翻墙
-</a></span></p>
-<p><span style="font-size: large;">            下载完后设置环境变量<br></span></p>
-<p><span style="font-size: large;">            sudo gedit /etc/profile<br></span></p>
-<p><span style="font-size: large;">            export PATH=$PATH:/home/google_appengine</span></p>
-<p><span style="font-size: large;">            source /etc/profile<br></span></p>
-<p><span style="font-size: large;">        3、修改配置文件</span></p>
-<p><span style="font-size: large;">             主要是src/app_engine目录下的apprtc.py和constants.py</span></p>
-<p><span style="font-size: large;">             首先是<span style="font-size: large;">constants.py</span>：</span></p>
-<p><span style="font-size: large;">             修改TURN_BASE_URL = ‘<a href="http://192.168.214.129:80&#39;" target="_blank" rel="noopener">http://192.168.214.129:80&#39;</a>  这个是上边提到的连接信息接口的地址</span></p>
-<p><span style="font-size: large;">             TURN_URL_TEMPLATE = ‘%s/turn.php?username=%s&amp;key=%s’</span></p>
-<p><span style="font-size: large;">             CEOD_KEY = 和coturn turnserver.conf <span style="font-size: large;">static-auth-secret一致</span><br></span></p>
-<p><span style="font-size: large;">             WSS_INSTANCES = [{<br>WSS_INSTANCE_HOST_KEY: ‘192.168.214.129:8089’,<br>WSS_INSTANCE_NAME_KEY: ‘wsserver-std’,<br>WSS_INSTANCE_ZONE_KEY: ‘us-central1-a’<br>}, {<br>WSS_INSTANCE_HOST_KEY: ‘192.168.214.129:8089’,<br>WSS_INSTANCE_NAME_KEY: ‘wsserver-std-2’,<br>WSS_INSTANCE_ZONE_KEY: ‘us-central1-f’<br>}]</span></p>
-<p><span style="font-size: large;">             apprtc.py:</span></p>
-<p><span style="font-size: large;">             修改get_wss_parameters(request) 下的</span></p>
-<p><span style="font-size: large;">              if wss_tls and wss_tls == ‘false’:<br>wss_url = ‘ws://‘ + wss_host_port_pair + ‘/ws’<br>wss_post_url = ‘http://‘ + wss_host_port_pair<br>else:<br>wss_url = ‘ws://‘ + wss_host_port_pair + ‘/ws’<br>wss_post_url = ‘http://‘ + wss_host_port_pair</span></p>
-<p><span style="font-size: large;">              主要是把原来的wss和https的scheme都改为ws和http，不要让客户端和浏览器去使用ssl连接，如果有第三   方根证书的签名机构颁发的证书就不需要这样了。</span></p>
-<p><span style="font-size: large;">               修改完后重新grunt build下。</span></p>
-<p><span style="font-size: large;">           4、启动</span></p>
-<p><span style="font-size: large;">                dev_appserver.py –host=0.0.0.0 ./out/app_engine</span></p>
-<p><span style="font-size: large;">三、Collider信令服务器</span></p>
-<p><span style="font-size: large;">        1、安装依赖</span></p>
-<p><span style="font-size: large;">         sudo apt-get install golang-go</span></p>
-<p><span style="font-size: large;">         2、在home目下创建文件夹</span></p>
-<p><span style="font-size: large;">         mkdir -p ~/collider_root        并在collider_root目录下创建src目录</span></p>
-<p><span style="font-size: large;">         设置GOPATH环境变量    export GOPATH=~/collider_root</span></p>
-<p><span style="font-size: large;">         将apprtc/src/collider目录下的三个文件夹都拷贝到collider_root/src下</span></p>
-<p><span style="font-size: large;">         进入到collider_root/src,开始编译安装collider，准备好翻墙</span></p>
-<p><span style="font-size: large;">         go get collidermain</span></p>
-<p><span style="font-size: large;">         go install collidermain</span></p>
-<p><span style="font-size: large;">         成功编译后会在collider_root目录下生成bin和pkg目录，执行文件在bin下。</span></p>
-<p><span style="font-size: large;">        3、运行</span></p>
-<p><span style="font-size: large;">          修改collider_root/src/collidermain/main.go填上自己ip地址</span></p>
-<p><span style="font-size: large;">          var roomSrv = flag.String(“room-server”, “<a href="http://192.168.214.129:8080/&quot;" target="_blank" rel="noopener">http://192.168.214.129:8080/&quot;</a>, “The origin of the room server”)</span></p>
-<p><span style="font-size: large;">          启动</span></p>
-<p><span style="font-size: large;">          ~/collider_root/bin/collidermain -port=8089 -tls=false</span></p>
-<p><span style="font-size: large;">四、coTurn 打洞服务器</span></p>
-<p><span style="font-size: large;">        1、下载<a href="http://turnserver.open-sys.org/downloads/" target="_blank" rel="noopener">http://turnserver.open-sys.org/downloads/</a></span></p>
-<p><span style="font-size: large;">         找个适合自己linux系统的，我这里是ubuntu32位所以选了turnserver-4.2.1.2-debian-wheezy-ubuntu-mint-x86-32bits.tar.gz</span></p>
-<p><span style="font-size: large;">         下载完后解压进入解压目录</span></p>
-<p><span style="font-size: large;">          cat INSTALL     查看安装须知</span></p>
-<p><span style="font-size: large;">          sudo apt-get install gdebi-core</span></p>
-<p><span style="font-size: large;">          sudo gdebi coturn_4.2.2.2-1_i386.deb</span></p>
-<p><span style="font-size: large;">         2、编辑配置文件</span></p>
-<p><span style="font-size: large;">           sudo gedit /etc/turnserver.conf</span></p>
-<p><span style="font-size: large;">           listening-device=eth0</span></p>
-<p><span style="font-size: large;">           listening-port=3478<br></span></p>
-<p><span style="font-size: large;">           relay-device=eth1</span></p>
-<p><span style="font-size: large;">           min-port=49152<br>max-port=65535<br></span></p>
-<p><span style="font-size: large;">           Verbose</span></p>
-<p><span style="font-size: large;">           fingerprint</span></p>
-<p><span style="font-size: large;">           lt-cred-mech</span></p>
-<p><span style="font-size: large;">           use-auth-secret</span></p>
-<p><span style="font-size: large;">           static-auth-secret=填写自己的密钥可不修改<br></span></p>
-<p><span style="font-size: large;">           stale-nonce</span></p>
-<p><span style="font-size: large;">           cert=/usr/local/etc/turn_server_cert.pem</span></p>
-<p><span style="font-size: large;">           pkey=/usr/local/etc/turn_server_pkey.pem</span></p>
-<p><span style="font-size: large;">           no-loopback-peers</span></p>
-<p><span style="font-size: large;">           no-multicast-peers</span></p>
-<p><span style="font-size: large;">           mobility</span></p>
-<p><span style="font-size: large;">           no-cli</span></p>
-<p><span style="font-size: large;">         3、生成签名证书</span></p>
-<p><span style="font-size: large;">           sudo openssl req -x509 -newkey  rsa:2048 -keyout<span style="font-size: large;">/usr/local/etc/turn_server_pkey.pem</span> -out <span style="font-size: large;">/usr/local/etc/turn_server_cert.pem</span> -days 99999 -nodes</span></p>
-<p><span style="font-size: large;">4、启动</span></p>
-<p><span style="font-size: large;">          service coturn start</span></p>
-<p><span style="font-size: large;">五、coTurn连接信息接口</span></p>
-<p><span style="font-size: large;">       TURN REST API <a href="http://tools.ietf.org/html/draft-uberti-behave-turn-rest-00" target="_blank" rel="noopener">标准参考文档</a></span></p>
-<p><span style="font-size: large;">       返回json结果示例：</span></p>
-<p><span style="font-size: large;">       {“username”:”1456904882:1231244”,”password”:”jAph7EHMLuPJuxLLC1uRiI3kvq4=”,”ttl”:86400,”uris”:[“turn:192.168.214.129:3478?transport=udp”,”turn:192.168.214.129:3478?transport=tcp”,”turn:192.168.214.129:3479?transport=udp”,”turn:192.168.214.129:3479?transport=tcp”]}</span></p>
-<p><span style="font-size: large;">       1、username字段需要以timestamp + “:”  + username的形式输出</span></p>
-<p><span style="font-size: large;">       2、<span style="font-size: large;">响应的 password 字段，需要以 HMAC-SHA1 算法计算得出，<strong>公式为：【base64_encode( hmac( key,
-</strong></span></span></p>
-<p><span style="font-size: large;"><strong>            <span style="font-size: large;"><b>username ) )】</b></span></strong>。</span><span style="font-size: large;">此处的 key，为 coTurn 服务器配置中的 “static-auth-secret”值。以 key 作为      hmac 算法的密<span style="font-size: large;">钥，turn-username 为被计算的内容，得出的 hmac 摘要后，经 base64 编码得到最终密码。</span></span></p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       3、uris为后台配置好的，我这里写死</span></span></span></p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       4、很简单的接口，用惯了java，这里我准备用php，写起来比java快</span></span></span></p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       </span></span></span></p>
-<p><pre class="html">&lt;?php</pre></p>
-<pre><code>$request_username = $_GET[&quot;username&quot;];
-if(empty($request_username)) {
-    echo &quot;username == null&quot;;
-    exit;
-}
-$request_key = $_GET[&quot;key&quot;];
-$time_to_live = 600;
-$timestamp = time() + $time_to_live;//失效时间
-$response_username = $timestamp.&quot;:&quot;.$_GET[&quot;username&quot;];
-$response_key = $request_key;
-if(empty($response_key))
-    $response_key = &quot;密钥&quot;;//constants.py中CEOD_KEY
-
-$response_password = getSignature($response_username, $response_key);
-
-$jsonObj = new Response();
-$jsonObj-&amp;gt;username = $response_username;
-$jsonObj-&amp;gt;password = $response_password;
-$jsonObj-&amp;gt;ttl = 86400;
-$jsonObj-&amp;gt;uris = array(&quot;turn:192.168.214.129:3478?transport=udp&quot;,&quot;turn:192.168.214.129:3478?transport=tcp&quot;,&quot;turn:192.168.214.129:3479?transport=udp&quot;,&quot;turn:192.168.214.129:3479?transport=tcp&quot;);
-
-echo json_encode($jsonObj);
-
-/** 
-     * 使用HMAC-SHA1算法生成签名值 
-     * 
- * @param $str 源串 
-     * @param $key 密钥 
-     * 
-     * @return 签名值 
-     */  
-function getSignature($str, $key) {  
-    $signature = &quot;&quot;;  
-    if (function_exists(&apos;hash_hmac&apos;)) {  
-        $signature = base64_encode(hash_hmac(&quot;sha1&quot;, $str, $key, true));  
-    } else {  
-        $blocksize = 64;  
-        $hashfunc = &apos;sha1&apos;;  
-        if (strlen($key) &amp;gt; $blocksize) {  
-            $key = pack(&apos;H*&apos;, $hashfunc($key));  
-        }  
-        $key = str_pad($key, $blocksize, chr(0x00));  
-        $ipad = str_repeat(chr(0x36), $blocksize);  
-        $opad = str_repeat(chr(0x5c), $blocksize);  
-        $hmac = pack(  
-                &apos;H*&apos;, $hashfunc(  
-                        ($key ^ $opad) . pack(  
-                                &apos;H*&apos;, $hashfunc(  
-                                        ($key ^ $ipad) . $str  
-                                )  
-                        )  
-                )  
-        );  
-        $signature = base64_encode($hmac);  
-    }  
-    return $signature;  
-   }  
-
-class Response {
-    public $username = &quot;&quot;;
-    public $password = &quot;&quot;;
-    public $ttl = &quot;&quot;;
-    public $uris = array(&quot;&quot;);
-}
-</code></pre><p>?&gt;<br>5、拿nginx部署下，怎么部署自行百度</p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">六、测试</span></span></span></p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       部署成功后可在浏览器输入<a href="http://192.168.214.129:8080创建房间" target="_blank" rel="noopener">http://192.168.214.129:8080创建房间</a></span></span></span></p>
-<p>appRTCDemo连接也改成<span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;"><a href="http://192.168.214.129:8080" target="_blank" rel="noopener">http://192.168.214.129:8080</a></span></span></span>即可</p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">七、参考连接</span></span></span></p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       <a href="http://www.mamicode.com/info-detail-513556.html" target="_blank" rel="noopener">http://www.mamicode.com/info-detail-513556.html</a></span></span></span></p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       <a href="http://www.jianshu.com/p/c55ecf5a3fcf" target="_blank" rel="noopener">http://www.jianshu.com/p/c55ecf5a3fcf</a></span></span></span></p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       <a href="http://www.bubuko.com/infodetail-938737.html" target="_blank" rel="noopener">http://www.bubuko.com/infodetail-938737.html</a>l<br></span></span></span></p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">八、关于webrtc编译<br></span></span></span></p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       我只编译了android的版本，公司网速慢死，找了个国内下好的代码，分享到网盘了<a href="http://pan.baidu.com/s/1kUyNE55" target="_blank" rel="noopener">http://pan.baidu.com/s/1kUyNE55</a></span></span></span></p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       AppRTCDemo的工程源码连接:<a href="http://download.csdn.net/detail/s569646547/9451013" target="_blank" rel="noopener">AppRTCDemo工程源码</a></span></span></span></p>
-<p><span style="font-size: large;">       运行截图：</span></p>
-<p><span style="font-size: large;">       <img src="http://img.blog.csdn.net/20160302182354507?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQv/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center" alt=""></span></p>
-<p><div></div><br>&nbsp;</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/未分类//" class="article-tag-list-link color4">未分类</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2016/09/13/apprtcwebrtc-e6-9c-ac-e5-9c-b0-e6-90-ad-e5-bb-ba-e6-9c-8d-e5-8a-a1-e5-99-a8-1/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-apprtcwebrtc-e6-9c-ac-e5-9c-b0-e6-90-ad-e5-bb-ba-e6-9c-8d-e5-8a-a1-e5-99-a8" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2016/09/13/apprtcwebrtc-e6-9c-ac-e5-9c-b0-e6-90-ad-e5-bb-ba-e6-9c-8d-e5-8a-a1-e5-99-a8/">apprtc(webrtc) 本地搭建服务器</a>
-    </h1>
-  
-
-        
-        <a href="/2016/09/13/apprtcwebrtc-e6-9c-ac-e5-9c-b0-e6-90-ad-e5-bb-ba-e6-9c-8d-e5-8a-a1-e5-99-a8/" class="archive-article-date">
-  	<time datetime="2016-09-13T06:53:44.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-09-13</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p><span style="font-size: large;">这两天测试了下webrtc的效果，不知道是不是手机比较渣，画面并不是很清晰，先来说说服务器的部署。部署环境ubuntu14.04 32位。<br></span></p>
-<p><span style="font-size: large;">一、服务器组成</span></p>
-<p><span style="font-size: large;">      1、AppRTC 房间服务器  <a href="https://github.com/webrtc/apprtc" target="_blank" rel="noopener">https://github.com/webrtc/apprtc</a></span></p>
-<p><span style="font-size: large;">      2、Collider  信令服务器  上边源码里自带</span></p>
-<p><span style="font-size: large;">      3、coTurn   穿透服务器   <a href="https://github.com/coturn/coturn" target="_blank" rel="noopener">https://github.com/coturn/coturn</a></span></p>
-<p><span style="font-size: large;">      4、需要自己实现coTurn连接信息接口，主要返回用户名、密码和turn配置信息，通常叫做TURN REST API,不实现这个接口的话AppRTCDemo连不上服务器，浏览器访问的话可以正常访问。</span></p>
-<p><span style="font-size: large;">二、AppRTC房间服务器</span></p>
-<p><span style="font-size: large;">      1、下载代码</span></p>
-<p><span style="font-size: large;">      2、安装依赖</span></p>
-<p><span style="font-size: large;">            sudo apt-get install nodejs</span></p>
-<p><span style="font-size: large;">            sudo npm install -g npm</span></p>
-<p><span style="font-size: large;">            sudo apt-get install nodejs-legacy</span></p>
-<p><span style="font-size: large;">            sudo npm -g install grunt-cli</span></p>
-<p><span style="font-size: large;">            切换到源码目录</span></p>
-<p><span style="font-size: large;">            cd apprtc-master</span></p>
-<p><span style="font-size: large;">            npm install</span></p>
-<p><span style="font-size: large;">            sudo apt-get install python-webtest</span></p>
-<p><span style="font-size: large;">            grunt build</span></p>
-<p><span style="font-size: large;">            编译之后会多出out目录</span></p>
-<p><span style="font-size: large;">            运行还依赖 Google App Engine SDK for  Python <a href="https://cloud.google.com/appengine/downloads#Google_App_Engine_SDK_for_Python" target="_blank" rel="noopener">需翻墙
-</a></span></p>
-<p><span style="font-size: large;">            下载完后设置环境变量<br></span></p>
-<p><span style="font-size: large;">            sudo gedit /etc/profile<br></span></p>
-<p><span style="font-size: large;">            export PATH=$PATH:/home/google_appengine</span></p>
-<p><span style="font-size: large;">            source /etc/profile<br></span></p>
-<p><span style="font-size: large;">        3、修改配置文件</span></p>
-<p><span style="font-size: large;">             主要是src/app_engine目录下的apprtc.py和constants.py</span></p>
-<p><span style="font-size: large;">             首先是<span style="font-size: large;">constants.py</span>：</span></p>
-<p><span style="font-size: large;">             修改TURN_BASE_URL = ‘<a href="http://192.168.214.129:80&#39;" target="_blank" rel="noopener">http://192.168.214.129:80&#39;</a>  这个是上边提到的连接信息接口的地址</span></p>
-<p><span style="font-size: large;">             TURN_URL_TEMPLATE = ‘%s/turn.php?username=%s&amp;key=%s’</span></p>
-<p><span style="font-size: large;">             CEOD_KEY = 和coturn turnserver.conf <span style="font-size: large;">static-auth-secret一致</span><br></span></p>
-<p><span style="font-size: large;">             WSS_INSTANCES = [{<br>WSS_INSTANCE_HOST_KEY: ‘192.168.214.129:8089’,<br>WSS_INSTANCE_NAME_KEY: ‘wsserver-std’,<br>WSS_INSTANCE_ZONE_KEY: ‘us-central1-a’<br>}, {<br>WSS_INSTANCE_HOST_KEY: ‘192.168.214.129:8089’,<br>WSS_INSTANCE_NAME_KEY: ‘wsserver-std-2’,<br>WSS_INSTANCE_ZONE_KEY: ‘us-central1-f’<br>}]</span></p>
-<p><span style="font-size: large;">             apprtc.py:</span></p>
-<p><span style="font-size: large;">             修改get_wss_parameters(request) 下的</span></p>
-<p><span style="font-size: large;">              if wss_tls and wss_tls == ‘false’:<br>wss_url = ‘ws://‘ + wss_host_port_pair + ‘/ws’<br>wss_post_url = ‘http://‘ + wss_host_port_pair<br>else:<br>wss_url = ‘ws://‘ + wss_host_port_pair + ‘/ws’<br>wss_post_url = ‘http://‘ + wss_host_port_pair</span></p>
-<p><span style="font-size: large;">              主要是把原来的wss和https的scheme都改为ws和http，不要让客户端和浏览器去使用ssl连接，如果有第三   方根证书的签名机构颁发的证书就不需要这样了。</span></p>
-<p><span style="font-size: large;">               修改完后重新grunt build下。</span></p>
-<p><span style="font-size: large;">           4、启动</span></p>
-<p><span style="font-size: large;">                dev_appserver.py –host=0.0.0.0 ./out/app_engine</span></p>
-<p><span style="font-size: large;">三、Collider信令服务器</span></p>
-<p><span style="font-size: large;">        1、安装依赖</span></p>
-<p><span style="font-size: large;">         sudo apt-get install golang-go</span></p>
-<p><span style="font-size: large;">         2、在home目下创建文件夹</span></p>
-<p><span style="font-size: large;">         mkdir -p ~/collider_root        并在collider_root目录下创建src目录</span></p>
-<p><span style="font-size: large;">         设置GOPATH环境变量    export GOPATH=~/collider_root</span></p>
-<p><span style="font-size: large;">         将apprtc/src/collider目录下的三个文件夹都拷贝到collider_root/src下</span></p>
-<p><span style="font-size: large;">         进入到collider_root/src,开始编译安装collider，准备好翻墙</span></p>
-<p><span style="font-size: large;">         go get collidermain</span></p>
-<p><span style="font-size: large;">         go install collidermain</span></p>
-<p><span style="font-size: large;">         成功编译后会在collider_root目录下生成bin和pkg目录，执行文件在bin下。</span></p>
-<p><span style="font-size: large;">        3、运行</span></p>
-<p><span style="font-size: large;">          修改collider_root/src/collidermain/main.go填上自己ip地址</span></p>
-<p><span style="font-size: large;">          var roomSrv = flag.String(“room-server”, “<a href="http://192.168.214.129:8080/&quot;" target="_blank" rel="noopener">http://192.168.214.129:8080/&quot;</a>, “The origin of the room server”)</span></p>
-<p><span style="font-size: large;">          启动</span></p>
-<p><span style="font-size: large;">          ~/collider_root/bin/collidermain -port=8089 -tls=false</span></p>
-<p><span style="font-size: large;">四、coTurn 打洞服务器</span></p>
-<p><span style="font-size: large;">        1、下载<a href="http://turnserver.open-sys.org/downloads/" target="_blank" rel="noopener">http://turnserver.open-sys.org/downloads/</a></span></p>
-<p><span style="font-size: large;">         找个适合自己linux系统的，我这里是ubuntu32位所以选了turnserver-4.2.1.2-debian-wheezy-ubuntu-mint-x86-32bits.tar.gz</span></p>
-<p><span style="font-size: large;">         下载完后解压进入解压目录</span></p>
-<p><span style="font-size: large;">          cat INSTALL     查看安装须知</span></p>
-<p><span style="font-size: large;">          sudo apt-get install gdebi-core</span></p>
-<p><span style="font-size: large;">          sudo gdebi coturn_4.2.2.2-1_i386.deb</span></p>
-<p><span style="font-size: large;">         2、编辑配置文件</span></p>
-<p><span style="font-size: large;">           sudo gedit /etc/turnserver.conf</span></p>
-<p><span style="font-size: large;">           listening-device=eth0</span></p>
-<p><span style="font-size: large;">           listening-port=3478<br></span></p>
-<p><span style="font-size: large;">           relay-device=eth1</span></p>
-<p><span style="font-size: large;">           min-port=49152<br>max-port=65535<br></span></p>
-<p><span style="font-size: large;">           Verbose</span></p>
-<p><span style="font-size: large;">           fingerprint</span></p>
-<p><span style="font-size: large;">           lt-cred-mech</span></p>
-<p><span style="font-size: large;">           use-auth-secret</span></p>
-<p><span style="font-size: large;">           static-auth-secret=填写自己的密钥可不修改<br></span></p>
-<p><span style="font-size: large;">           stale-nonce</span></p>
-<p><span style="font-size: large;">           cert=/usr/local/etc/turn_server_cert.pem</span></p>
-<p><span style="font-size: large;">           pkey=/usr/local/etc/turn_server_pkey.pem</span></p>
-<p><span style="font-size: large;">           no-loopback-peers</span></p>
-<p><span style="font-size: large;">           no-multicast-peers</span></p>
-<p><span style="font-size: large;">           mobility</span></p>
-<p><span style="font-size: large;">           no-cli</span></p>
-<p><span style="font-size: large;">         3、生成签名证书</span></p>
-<p><span style="font-size: large;">           sudo openssl req -x509 -newkey  rsa:2048 -keyout<span style="font-size: large;">/usr/local/etc/turn_server_pkey.pem</span> -out <span style="font-size: large;">/usr/local/etc/turn_server_cert.pem</span> -days 99999 -nodes</span></p>
-<p><span style="font-size: large;">4、启动</span></p>
-<p><span style="font-size: large;">          service coturn start</span></p>
-<p><span style="font-size: large;">五、coTurn连接信息接口</span></p>
-<p><span style="font-size: large;">       TURN REST API <a href="http://tools.ietf.org/html/draft-uberti-behave-turn-rest-00" target="_blank" rel="noopener">标准参考文档</a></span></p>
-<p><span style="font-size: large;">       返回json结果示例：</span></p>
-<p><span style="font-size: large;">       {“username”:”1456904882:1231244”,”password”:”jAph7EHMLuPJuxLLC1uRiI3kvq4=”,”ttl”:86400,”uris”:[“turn:192.168.214.129:3478?transport=udp”,”turn:192.168.214.129:3478?transport=tcp”,”turn:192.168.214.129:3479?transport=udp”,”turn:192.168.214.129:3479?transport=tcp”]}</span></p>
-<p><span style="font-size: large;">       1、username字段需要以timestamp + “:”  + username的形式输出</span></p>
-<p><span style="font-size: large;">       2、<span style="font-size: large;">响应的 password 字段，需要以 HMAC-SHA1 算法计算得出，<strong>公式为：【base64_encode( hmac( key,
-</strong></span></span></p>
-<p><span style="font-size: large;"><strong>            <span style="font-size: large;"><b>username ) )】</b></span></strong>。</span><span style="font-size: large;">此处的 key，为 coTurn 服务器配置中的 “static-auth-secret”值。以 key 作为      hmac 算法的密<span style="font-size: large;">钥，turn-username 为被计算的内容，得出的 hmac 摘要后，经 base64 编码得到最终密码。</span></span></p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       3、uris为后台配置好的，我这里写死</span></span></span></p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       4、很简单的接口，用惯了java，这里我准备用php，写起来比java快</span></span></span></p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       </span></span></span></p>
-<p><pre class="html">&lt;?php</pre></p>
-<pre><code>$request_username = $_GET[&quot;username&quot;];
-if(empty($request_username)) {
-    echo &quot;username == null&quot;;
-    exit;
-}
-$request_key = $_GET[&quot;key&quot;];
-$time_to_live = 600;
-$timestamp = time() + $time_to_live;//失效时间
-$response_username = $timestamp.&quot;:&quot;.$_GET[&quot;username&quot;];
-$response_key = $request_key;
-if(empty($response_key))
-    $response_key = &quot;密钥&quot;;//constants.py中CEOD_KEY
-
-$response_password = getSignature($response_username, $response_key);
-
-$jsonObj = new Response();
-$jsonObj-&amp;gt;username = $response_username;
-$jsonObj-&amp;gt;password = $response_password;
-$jsonObj-&amp;gt;ttl = 86400;
-$jsonObj-&amp;gt;uris = array(&quot;turn:192.168.214.129:3478?transport=udp&quot;,&quot;turn:192.168.214.129:3478?transport=tcp&quot;,&quot;turn:192.168.214.129:3479?transport=udp&quot;,&quot;turn:192.168.214.129:3479?transport=tcp&quot;);
-
-echo json_encode($jsonObj);
-
-/** 
-     * 使用HMAC-SHA1算法生成签名值 
-     * 
- * @param $str 源串 
-     * @param $key 密钥 
-     * 
-     * @return 签名值 
-     */  
-function getSignature($str, $key) {  
-    $signature = &quot;&quot;;  
-    if (function_exists(&apos;hash_hmac&apos;)) {  
-        $signature = base64_encode(hash_hmac(&quot;sha1&quot;, $str, $key, true));  
-    } else {  
-        $blocksize = 64;  
-        $hashfunc = &apos;sha1&apos;;  
-        if (strlen($key) &amp;gt; $blocksize) {  
-            $key = pack(&apos;H*&apos;, $hashfunc($key));  
-        }  
-        $key = str_pad($key, $blocksize, chr(0x00));  
-        $ipad = str_repeat(chr(0x36), $blocksize);  
-        $opad = str_repeat(chr(0x5c), $blocksize);  
-        $hmac = pack(  
-                &apos;H*&apos;, $hashfunc(  
-                        ($key ^ $opad) . pack(  
-                                &apos;H*&apos;, $hashfunc(  
-                                        ($key ^ $ipad) . $str  
-                                )  
-                        )  
-                )  
-        );  
-        $signature = base64_encode($hmac);  
-    }  
-    return $signature;  
-   }  
-
-class Response {
-    public $username = &quot;&quot;;
-    public $password = &quot;&quot;;
-    public $ttl = &quot;&quot;;
-    public $uris = array(&quot;&quot;);
-}
-</code></pre><p>?&gt;<br>5、拿nginx部署下，怎么部署自行百度</p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">六、测试</span></span></span></p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       部署成功后可在浏览器输入<a href="http://192.168.214.129:8080创建房间" target="_blank" rel="noopener">http://192.168.214.129:8080创建房间</a></span></span></span></p>
-<p>appRTCDemo连接也改成<span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;"><a href="http://192.168.214.129:8080" target="_blank" rel="noopener">http://192.168.214.129:8080</a></span></span></span>即可</p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">七、参考连接</span></span></span></p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       <a href="http://www.mamicode.com/info-detail-513556.html" target="_blank" rel="noopener">http://www.mamicode.com/info-detail-513556.html</a></span></span></span></p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       <a href="http://www.jianshu.com/p/c55ecf5a3fcf" target="_blank" rel="noopener">http://www.jianshu.com/p/c55ecf5a3fcf</a></span></span></span></p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       <a href="http://www.bubuko.com/infodetail-938737.html" target="_blank" rel="noopener">http://www.bubuko.com/infodetail-938737.html</a>l<br></span></span></span></p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">八、关于webrtc编译<br></span></span></span></p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       我只编译了android的版本，公司网速慢死，找了个国内下好的代码，分享到网盘了<a href="http://pan.baidu.com/s/1kUyNE55" target="_blank" rel="noopener">http://pan.baidu.com/s/1kUyNE55</a></span></span></span></p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       AppRTCDemo的工程源码连接:<a href="http://download.csdn.net/detail/s569646547/9451013" target="_blank" rel="noopener">AppRTCDemo工程源码</a></span></span></span></p>
-<p><span style="font-size: large;">       运行截图：</span></p>
-<p><span style="font-size: large;">       <img src="http://img.blog.csdn.net/20160302182354507?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQv/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center" alt=""></span></p>
-<p><div></div><br>&nbsp;</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/未分类//" class="article-tag-list-link color4">未分类</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2016/09/13/apprtcwebrtc-e6-9c-ac-e5-9c-b0-e6-90-ad-e5-bb-ba-e6-9c-8d-e5-8a-a1-e5-99-a8/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-teamtalk-ubuntu-e6-9c-8d-e5-8a-a1-e7-ab-af-e9-83-a8-e7-bd-b2" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2016/09/13/teamtalk-ubuntu-e6-9c-8d-e5-8a-a1-e7-ab-af-e9-83-a8-e7-bd-b2/">TeamTalk——ubuntu服务端部署</a>
-    </h1>
-  
-
-        
-        <a href="/2016/09/13/teamtalk-ubuntu-e6-9c-8d-e5-8a-a1-e7-ab-af-e9-83-a8-e7-bd-b2/" class="archive-article-date">
-  	<time datetime="2016-09-13T06:52:30.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-09-13</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p><span style="font-size: large;">这是第二次部署了，第一次在双系统Ubuntu上部署，这次准备在虚拟机上部署，所用版本Ubuntu 15.10 64位(14.04版本编译出很多问题，所以直接用最新版),这里要感谢蓝狐的教程</span><a href="http://www.bluefoxah.org/teamtalk/new_tt_deploy.html" target="_blank" rel="noopener"><span style="font-size: large;">http://www.bluefoxah.org/teamtalk/new_tt_deploy.html</span></a></p>
-<p><span style="font-size: large;">一、准本工作</span></p>
-<p><span style="font-size: large;">1、更新操作系统(非必须)<br></span></p>
-<p>sudo apt-get update</p>
-<p><span style="font-size: large;">2、删除已安装的软件</span></p>
-<p>mysql、nginx、php最好都用新版。<br>2.1安装mysql</p>
-<p>mysql版本5.6以上</p>
-<p>sudo apt-get autoremove –purge mysql-server-5.5</p>
-<p>sudo apt-get autoremove –purge mysql-client-5.5</p>
-<p>官网下载mysql5.6</p>
-<p><img src="http://write.blog.csdn.net/postedit/50157731" alt=""></p>
-<p>安装：</p>
-<p>sudo dpkg -i mysql-common_5.6.27-1ubuntu14.04_i386.deb mysql-community-client_5.6.27-1ubuntu14.04_i386.deb mysql-community-        server_5.6.27-1ubuntu14.04_i386.deb</p>
-<p>提示缺少 libaio1，安装libaio1</p>
-<p>sudo apt-get install libaio1;</p>
-<p>重新安装成功</p>
-<p>或者 sudo apt-get install mysql-server mysql-client libmysqlclient-dev</p>
-<p>导入sql脚本，进入TeamTalk-master/auto_setup/mariadb/conf/</p>
-<p>source /自己的目录/TeamTalk-master/auto_setup/mariadb/conf/ttopen.sql;</p>
-<p>2.2 安装php</p>
-<p>sudo apt-get install php5-fpm; sudo apt-get install php5-mysql;</p>
-<p>2.3 安装nginx</p>
-<p>如果先前安装了Apache2 先卸载，卸载方法同上</p>
-<p>官网下载最新为1.9.7，解压</p>
-<p>./configure –prefix=/usr/local/nginx    安装在/usr/local下</p>
-<p>提示缺少依赖包pcre</p>
-<p>sudo apt-get install libpcre3 libpcre3.dev</p>
-<p>重新configure提示缺少zlib</p>
-<p>sudo apt-get install zlib1g zlib1g.dev</p>
-<p>安装依赖 ssl</p>
-<p>sudo apt-get install libssl-dev</p>
-<p>重新configure，通过，编译安装nginx</p>
-<p>sudo make</p>
-<p>sudo make install</p>
-<p>启动   sudo  /usr/local/nginx/sbin/nginx</p>
-<p>2.4安装redis</p>
-<p>官网下载    3.0.5</p>
-<p>sudo make</p>
-<p>sudo make install</p>
-<p>启动  ./redis-server    为了省事我这里不写启动脚本了</p>
-<p>2.5 安装PB</p>
-<p>protobuf-2.6.1(teamtalk server源码目录下有)，安装</p>
-<p>./configure –prefix=/usr/local/protobuf</p>
-<p>sudo make</p>
-<p>sudo make install</p>
-<p><span style="font-size: large;">3编译源码</span></p>
-<p>3.1准备工作<br>进入  server/src目录</p>
-<p>sudo sh make_log4cxx.sh</p>
-<p>报错，手动安装log4cxx依赖apr，apr-util</p>
-<p>官网下载<a href="http://apr.apache.org/download.cgi" target="_blank" rel="noopener">http://apr.apache.org/download.cgi</a></p>
-<p>安装apr</p>
-<p>./configure –prefix=/usr/apr</p>
-<p>sudo make</p>
-<p>sudo make install</p>
-<p>安转apr-util</p>
-<p><div class="line number1 index0 alt2"><code>.`</code>/configure<code>--prefix=</code>/usr/apr-util<code>--with-apr=</code>/usr/apr`</div><br>sudo make</p>
-<p>sudo make install</p>
-<p>重新 sudo sh make_log4cxx.sh</p>
-<p>还报错打开  make_log4cxx.sh</p>
-<p>在build_log4cxx（）里修改apr与apr-util路径为刚才的安装路径</p>
-<p>重新 sudo sh make_log4cxx.sh，通过。</p>
-<p>sudo sh make_hredis.sh</p>
-<p>3.2 编译server</p>
-<p>sudo sh build_ubuntu.sh version 1.0.0</p>
-<p>缺少uuid的话安装</p>
-<p>sudo apt-get install uuid-dev</p>
-<p>编译成功后会在server目录下生成im-server-1.0.0压缩包</p>
-<p><span style="font-size: large;">  4、部署</span></p>
-<p>解压im-server-1.0.0 为了方便看日志将lib包下的log4cxx.properties复制到各个server目录下</p>
-<p>设置临时环境变量 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:自己的路径/im-server-1.0.0/lib</p>
-<p>各个server的配置文件按蓝狐的教程就行</p>
-<p>4.1db_proxy_server</p>
-<p>server启动顺序会有一定影响所以先启动db_proxy_server</p>
-<p>进入db_proxy_server</p>
-<p>../daeml db_proxy_server</p>
-<p>查看是否启动</p>
-<p>ps -ef|grep server</p>
-<p>发现没有启动成功，去看log日志提示无法链接到192.168.1.94的数据库上</p>
-<p>检查mysql的配置文件my.cnf发现bind-address监听的是127.0.0.1修改成本机ip，重启mysql</p>
-<p>我用的root用户，所以还得为root开启远程访问权限</p>
-<p>登录mysql，执行</p>
-<p>grant all on mysql.* to ‘root‘@’%’ identified by ‘你的root密码’;</p>
-<p>flush privileges;//提交修改</p>
-<p>退出mysql使用本机ip访问mysql</p>
-<p>mysql -h 192.168.0.94 -u root -p</p>
-<p>如果能访问说明设置成功</p>
-<p>重新启动db_proxy_server成功</p>
-<p>4.2route_server</p>
-<p>../daeml route_server</p>
-<p>4.3file_server</p>
-<p>../daeml file_server</p>
-<p>4.4msfs</p>
-<p>进入msfs目录</p>
-<p>拷贝msfs.conf.example一份，重命名为msfs.conf</p>
-<p>打开msfs.conf修改BaseDir=自己的目录/files，主要存放小文件照片，表情等</p>
-<p>../daeml msfs</p>
-<p>4.5login_server</p>
-<p>../daeml login_server</p>
-<p>4.6msg_server</p>
-<p>../daeml msg_server</p>
-<p>4.7http_msg_server</p>
-<p>../daeml http_msg_server</p>
-<p>4.8push_server</p>
-<p>../daeml push_server</p>
-<p><span style="font-size: large;"> 5.配置php服务器</span></p>
-<p><span style="font-size: large;">   </span><span style="font-size: large;">下面是我的nginx服务器的配置，nginx.conf</span></p>
-<p>&nbsp;</p>
-<p><pre class="html">user  www-data;<br>worker_processes  auto;</pre></p>
-<p>error_log  /自己的目录/logs/error.log crit;</p>
-<p>#error_log  logs/error.log  notice;</p>
-<p>#error_log  logs/error.log  info;</p>
-<p>pid        /usr/local/nginx/logs/nginx.pid;</p>
-<p>worker_rlimit_nofile 51200;<br>events {<br>    use epoll;<br>    worker_connections  51200;<br>    multi_accept on;<br>}</p>
-<p>http {<br>    include       mime.types;<br>    default_type  application/octet-stream;<br>    server_names_hash_bucket_size 128;<br>    client_header_buffer_size 32k;<br>    large_client_header_buffers 4 32k;<br>    client_max_body_size 50m;<br>    sendfile        on;<br>    tcp_nopush     on;<br>    keepalive_timeout 60;<br>    tcp_nodelay on;<br>    fastcgi_connect_timeout 300;<br>    fastcgi_send_timeout 300;<br>    fastcgi_read_timeout 300;<br>    fastcgi_buffer_size 64k;<br>    fastcgi_buffers 4 64k;<br>    fastcgi_busy_buffers_size 128k;<br>    fastcgi_temp_file_write_size 256k;<br>    gzip on;<br>    gzip_min_length  1k;<br>    gzip_buffers     4 16k;<br>    gzip_http_version 1.0;<br>    gzip_comp_level 2;<br>    gzip_types       text/plain application/x-javascript text/css application/xml;<br>    gzip_vary on;<br>    gzip_proxied        expired no-cache no-store private auth;<br>    gzip_disable        “MSIE [1-6].“;<br>    server_tokens off;<br>    log_format  access  ‘$remote_addr - $remote_user [$time_local] “$request” ‘<br>        ‘$status $body_bytes_sent “$http_referer” ‘<br>        ‘“$http_user_agent” $http_x_forwarded_for’;</p>
-<pre><code>server {
-    listen       80;
-    server_name  192.168.214.130;
-root   /自己的目录/www/teamtalk;
-    location ~ \.php($|/){
-        root   /自己的目录/www/teamtalk;
-        index  index.html index.htm index.php default.html default.htm default.php;
-        fastcgi_pass   unix:/var/run/php5-fpm.sock;//这里写自己php-fpm.conf  里listen的位置
-            fastcgi_index  index.php;
-            fastcgi_split_path_info ^(.+\.php)(.*)$;
-            fastcgi_param   PATH_INFO $fastcgi_path_info;
-            fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
-            include        fastcgi_params;
-    }
-
-     location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
-                {
-                        expires      30d;
-                }
-
-        location ~ .*\.(js|css)?$
-                {
-                        expires      12h;
-                }
-        if (!-e $request_filename) {
-            rewrite ^/(.*)$ /index.php/$1 last;
-            break;
-      }
-
-    #error_page  404              /404.html;
-
-    # redirect server error pages to the static page /50x.html
-    #
-    error_page   500 502 503 504  /50x.html;
-    location = /50x.html {
-        root   html;
-    }
-
-    # proxy the PHP scripts to Apache listening on 127.0.0.1:80
-    #
-    #location ~ \.php$ {
-    #    proxy_pass   http://127.0.0.1;
-    #}
-
-    # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
-    #
-    #location ~ \.php$ {
-    #    root           html;
-    #    fastcgi_pass   127.0.0.1:9000;
-    #    fastcgi_index  index.php;
-    #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
-    #    include        fastcgi_params;
-    #}
-
-    # deny access to .htaccess files, if Apache&apos;s document root
-    # concurs with nginx&apos;s one
-    #
-    #location ~ /\.ht {
-    #    deny  all;
-    #}
-}
-
-# another virtual host using mix of IP-, name-, and port-based configuration
-#
-#server {
-#    listen       8000;
-#    listen       somename:8080;
-#    server_name  somename  alias  another.alias;
-
-#    location / {
-#        root   html;
-#        index  index.html index.htm;
-#    }
-#}
-
-# HTTPS server
-#
-#server {
-#    listen       443 ssl;
-#    server_name  localhost;
-
-#    ssl_certificate      cert.pem;
-#    ssl_certificate_key  cert.key;
-
-#    ssl_session_cache    shared:SSL:1m;
-#    ssl_session_timeout  5m;
-
-#    ssl_ciphers  HIGH:!aNULL:!MD5;
-#    ssl_prefer_server_ciphers  on;
-
-#    location / {
-#        root   html;
-#        index  index.html index.htm;
-#    }
-#}
-</code></pre><p>}<br><br>&nbsp;</p>
-<p>修改完后记得重启nginx。</p>
-<p>编译部署完成，如果所有server都启动了还是不能发消息的话，重新启动所有server再试一遍。</p>
-<p>编译好的文件<a href="http://download.csdn.net/detail/s569646547/9326617" target="_blank" rel="noopener">http://download.csdn.net/detail/s569646547/9326617</a></p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/未分类//" class="article-tag-list-link color4">未分类</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2016/09/13/teamtalk-ubuntu-e6-9c-8d-e5-8a-a1-e7-ab-af-e9-83-a8-e7-bd-b2/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-teamtalk-ubuntu-e6-9c-8d-e5-8a-a1-e7-ab-af-e9-83-a8-e7-bd-b2-1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2016/09/13/teamtalk-ubuntu-e6-9c-8d-e5-8a-a1-e7-ab-af-e9-83-a8-e7-bd-b2-1/">TeamTalk——ubuntu服务端部署</a>
-    </h1>
-  
-
-        
-        <a href="/2016/09/13/teamtalk-ubuntu-e6-9c-8d-e5-8a-a1-e7-ab-af-e9-83-a8-e7-bd-b2-1/" class="archive-article-date">
-  	<time datetime="2016-09-13T06:52:30.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-09-13</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p><span style="font-size: large;">这是第二次部署了，第一次在双系统Ubuntu上部署，这次准备在虚拟机上部署，所用版本Ubuntu 15.10 64位(14.04版本编译出很多问题，所以直接用最新版),这里要感谢蓝狐的教程</span><a href="http://www.bluefoxah.org/teamtalk/new_tt_deploy.html" target="_blank" rel="noopener"><span style="font-size: large;">http://www.bluefoxah.org/teamtalk/new_tt_deploy.html</span></a></p>
-<p><span style="font-size: large;">一、准本工作</span></p>
-<p><span style="font-size: large;">1、更新操作系统(非必须)<br></span></p>
-<p>sudo apt-get update</p>
-<p><span style="font-size: large;">2、删除已安装的软件</span></p>
-<p>mysql、nginx、php最好都用新版。<br>2.1安装mysql</p>
-<p>mysql版本5.6以上</p>
-<p>sudo apt-get autoremove –purge mysql-server-5.5</p>
-<p>sudo apt-get autoremove –purge mysql-client-5.5</p>
-<p>官网下载mysql5.6</p>
-<p><img src="http://write.blog.csdn.net/postedit/50157731" alt=""></p>
-<p>安装：</p>
-<p>sudo dpkg -i mysql-common_5.6.27-1ubuntu14.04_i386.deb mysql-community-client_5.6.27-1ubuntu14.04_i386.deb mysql-community-        server_5.6.27-1ubuntu14.04_i386.deb</p>
-<p>提示缺少 libaio1，安装libaio1</p>
-<p>sudo apt-get install libaio1;</p>
-<p>重新安装成功</p>
-<p>或者 sudo apt-get install mysql-server mysql-client libmysqlclient-dev</p>
-<p>导入sql脚本，进入TeamTalk-master/auto_setup/mariadb/conf/</p>
-<p>source /自己的目录/TeamTalk-master/auto_setup/mariadb/conf/ttopen.sql;</p>
-<p>2.2 安装php</p>
-<p>sudo apt-get install php5-fpm; sudo apt-get install php5-mysql;</p>
-<p>2.3 安装nginx</p>
-<p>如果先前安装了Apache2 先卸载，卸载方法同上</p>
-<p>官网下载最新为1.9.7，解压</p>
-<p>./configure –prefix=/usr/local/nginx    安装在/usr/local下</p>
-<p>提示缺少依赖包pcre</p>
-<p>sudo apt-get install libpcre3 libpcre3.dev</p>
-<p>重新configure提示缺少zlib</p>
-<p>sudo apt-get install zlib1g zlib1g.dev</p>
-<p>安装依赖 ssl</p>
-<p>sudo apt-get install libssl-dev</p>
-<p>重新configure，通过，编译安装nginx</p>
-<p>sudo make</p>
-<p>sudo make install</p>
-<p>启动   sudo  /usr/local/nginx/sbin/nginx</p>
-<p>2.4安装redis</p>
-<p>官网下载    3.0.5</p>
-<p>sudo make</p>
-<p>sudo make install</p>
-<p>启动  ./redis-server    为了省事我这里不写启动脚本了</p>
-<p>2.5 安装PB</p>
-<p>protobuf-2.6.1(teamtalk server源码目录下有)，安装</p>
-<p>./configure –prefix=/usr/local/protobuf</p>
-<p>sudo make</p>
-<p>sudo make install</p>
-<p><span style="font-size: large;">3编译源码</span></p>
-<p>3.1准备工作<br>进入  server/src目录</p>
-<p>sudo sh make_log4cxx.sh</p>
-<p>报错，手动安装log4cxx依赖apr，apr-util</p>
-<p>官网下载<a href="http://apr.apache.org/download.cgi" target="_blank" rel="noopener">http://apr.apache.org/download.cgi</a></p>
-<p>安装apr</p>
-<p>./configure –prefix=/usr/apr</p>
-<p>sudo make</p>
-<p>sudo make install</p>
-<p>安转apr-util</p>
-<p><div class="line number1 index0 alt2"><code>.`</code>/configure<code>--prefix=</code>/usr/apr-util<code>--with-apr=</code>/usr/apr`</div><br>sudo make</p>
-<p>sudo make install</p>
-<p>重新 sudo sh make_log4cxx.sh</p>
-<p>还报错打开  make_log4cxx.sh</p>
-<p>在build_log4cxx（）里修改apr与apr-util路径为刚才的安装路径</p>
-<p>重新 sudo sh make_log4cxx.sh，通过。</p>
-<p>sudo sh make_hredis.sh</p>
-<p>3.2 编译server</p>
-<p>sudo sh build_ubuntu.sh version 1.0.0</p>
-<p>缺少uuid的话安装</p>
-<p>sudo apt-get install uuid-dev</p>
-<p>编译成功后会在server目录下生成im-server-1.0.0压缩包</p>
-<p><span style="font-size: large;">  4、部署</span></p>
-<p>解压im-server-1.0.0 为了方便看日志将lib包下的log4cxx.properties复制到各个server目录下</p>
-<p>设置临时环境变量 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:自己的路径/im-server-1.0.0/lib</p>
-<p>各个server的配置文件按蓝狐的教程就行</p>
-<p>4.1db_proxy_server</p>
-<p>server启动顺序会有一定影响所以先启动db_proxy_server</p>
-<p>进入db_proxy_server</p>
-<p>../daeml db_proxy_server</p>
-<p>查看是否启动</p>
-<p>ps -ef|grep server</p>
-<p>发现没有启动成功，去看log日志提示无法链接到192.168.1.94的数据库上</p>
-<p>检查mysql的配置文件my.cnf发现bind-address监听的是127.0.0.1修改成本机ip，重启mysql</p>
-<p>我用的root用户，所以还得为root开启远程访问权限</p>
-<p>登录mysql，执行</p>
-<p>grant all on mysql.* to ‘root‘@’%’ identified by ‘你的root密码’;</p>
-<p>flush privileges;//提交修改</p>
-<p>退出mysql使用本机ip访问mysql</p>
-<p>mysql -h 192.168.0.94 -u root -p</p>
-<p>如果能访问说明设置成功</p>
-<p>重新启动db_proxy_server成功</p>
-<p>4.2route_server</p>
-<p>../daeml route_server</p>
-<p>4.3file_server</p>
-<p>../daeml file_server</p>
-<p>4.4msfs</p>
-<p>进入msfs目录</p>
-<p>拷贝msfs.conf.example一份，重命名为msfs.conf</p>
-<p>打开msfs.conf修改BaseDir=自己的目录/files，主要存放小文件照片，表情等</p>
-<p>../daeml msfs</p>
-<p>4.5login_server</p>
-<p>../daeml login_server</p>
-<p>4.6msg_server</p>
-<p>../daeml msg_server</p>
-<p>4.7http_msg_server</p>
-<p>../daeml http_msg_server</p>
-<p>4.8push_server</p>
-<p>../daeml push_server</p>
-<p><span style="font-size: large;"> 5.配置php服务器</span></p>
-<p><span style="font-size: large;">   </span><span style="font-size: large;">下面是我的nginx服务器的配置，nginx.conf</span></p>
-<p>&nbsp;</p>
-<p><pre class="html">user  www-data;<br>worker_processes  auto;</pre></p>
-<p>error_log  /自己的目录/logs/error.log crit;</p>
-<p>#error_log  logs/error.log  notice;</p>
-<p>#error_log  logs/error.log  info;</p>
-<p>pid        /usr/local/nginx/logs/nginx.pid;</p>
-<p>worker_rlimit_nofile 51200;<br>events {<br>    use epoll;<br>    worker_connections  51200;<br>    multi_accept on;<br>}</p>
-<p>http {<br>    include       mime.types;<br>    default_type  application/octet-stream;<br>    server_names_hash_bucket_size 128;<br>    client_header_buffer_size 32k;<br>    large_client_header_buffers 4 32k;<br>    client_max_body_size 50m;<br>    sendfile        on;<br>    tcp_nopush     on;<br>    keepalive_timeout 60;<br>    tcp_nodelay on;<br>    fastcgi_connect_timeout 300;<br>    fastcgi_send_timeout 300;<br>    fastcgi_read_timeout 300;<br>    fastcgi_buffer_size 64k;<br>    fastcgi_buffers 4 64k;<br>    fastcgi_busy_buffers_size 128k;<br>    fastcgi_temp_file_write_size 256k;<br>    gzip on;<br>    gzip_min_length  1k;<br>    gzip_buffers     4 16k;<br>    gzip_http_version 1.0;<br>    gzip_comp_level 2;<br>    gzip_types       text/plain application/x-javascript text/css application/xml;<br>    gzip_vary on;<br>    gzip_proxied        expired no-cache no-store private auth;<br>    gzip_disable        “MSIE [1-6].“;<br>    server_tokens off;<br>    log_format  access  ‘$remote_addr - $remote_user [$time_local] “$request” ‘<br>        ‘$status $body_bytes_sent “$http_referer” ‘<br>        ‘“$http_user_agent” $http_x_forwarded_for’;</p>
-<pre><code>server {
-    listen       80;
-    server_name  192.168.214.130;
-root   /自己的目录/www/teamtalk;
-    location ~ \.php($|/){
-        root   /自己的目录/www/teamtalk;
-        index  index.html index.htm index.php default.html default.htm default.php;
-        fastcgi_pass   unix:/var/run/php5-fpm.sock;//这里写自己php-fpm.conf  里listen的位置
-            fastcgi_index  index.php;
-            fastcgi_split_path_info ^(.+\.php)(.*)$;
-            fastcgi_param   PATH_INFO $fastcgi_path_info;
-            fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
-            include        fastcgi_params;
-    }
-
-     location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
-                {
-                        expires      30d;
-                }
-
-        location ~ .*\.(js|css)?$
-                {
-                        expires      12h;
-                }
-        if (!-e $request_filename) {
-            rewrite ^/(.*)$ /index.php/$1 last;
-            break;
-      }
-
-    #error_page  404              /404.html;
-
-    # redirect server error pages to the static page /50x.html
-    #
-    error_page   500 502 503 504  /50x.html;
-    location = /50x.html {
-        root   html;
-    }
-
-    # proxy the PHP scripts to Apache listening on 127.0.0.1:80
-    #
-    #location ~ \.php$ {
-    #    proxy_pass   http://127.0.0.1;
-    #}
-
-    # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
-    #
-    #location ~ \.php$ {
-    #    root           html;
-    #    fastcgi_pass   127.0.0.1:9000;
-    #    fastcgi_index  index.php;
-    #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
-    #    include        fastcgi_params;
-    #}
-
-    # deny access to .htaccess files, if Apache&apos;s document root
-    # concurs with nginx&apos;s one
-    #
-    #location ~ /\.ht {
-    #    deny  all;
-    #}
-}
-
-# another virtual host using mix of IP-, name-, and port-based configuration
-#
-#server {
-#    listen       8000;
-#    listen       somename:8080;
-#    server_name  somename  alias  another.alias;
-
-#    location / {
-#        root   html;
-#        index  index.html index.htm;
-#    }
-#}
-
-# HTTPS server
-#
-#server {
-#    listen       443 ssl;
-#    server_name  localhost;
-
-#    ssl_certificate      cert.pem;
-#    ssl_certificate_key  cert.key;
-
-#    ssl_session_cache    shared:SSL:1m;
-#    ssl_session_timeout  5m;
-
-#    ssl_ciphers  HIGH:!aNULL:!MD5;
-#    ssl_prefer_server_ciphers  on;
-
-#    location / {
-#        root   html;
-#        index  index.html index.htm;
-#    }
-#}
-</code></pre><p>}<br><br>&nbsp;</p>
-<p>修改完后记得重启nginx。</p>
-<p>编译部署完成，如果所有server都启动了还是不能发消息的话，重新启动所有server再试一遍。</p>
-<p>编译好的文件<a href="http://download.csdn.net/detail/s569646547/9326617" target="_blank" rel="noopener">http://download.csdn.net/detail/s569646547/9326617</a></p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/未分类//" class="article-tag-list-link color4">未分类</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2016/09/13/teamtalk-ubuntu-e6-9c-8d-e5-8a-a1-e7-ab-af-e9-83-a8-e7-bd-b2-1/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-volley-e6-89-a9-e5-b1-95-e6-96-87-e4-bb-b6-e6-96-ad-e7-82-b9-e4-b8-8b-e8-bd-bd-ef-bc-88-e6-94-af-e6-8c-81-e4-b8-8b-e8-bd-bd-e8-bf-9b-e5-ba-a6-ef-bc-89-1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2016/09/13/volley-e6-89-a9-e5-b1-95-e6-96-87-e4-bb-b6-e6-96-ad-e7-82-b9-e4-b8-8b-e8-bd-bd-ef-bc-88-e6-94-af-e6-8c-81-e4-b8-8b-e8-bd-bd-e8-bf-9b-e5-ba-a6-ef-bc-89-1/">Volley扩展——文件断点下载（支持下载进度）</a>
-    </h1>
-  
-
-        
-        <a href="/2016/09/13/volley-e6-89-a9-e5-b1-95-e6-96-87-e4-bb-b6-e6-96-ad-e7-82-b9-e4-b8-8b-e8-bd-bd-ef-bc-88-e6-94-af-e6-8c-81-e4-b8-8b-e8-bd-bd-e8-bf-9b-e5-ba-a6-ef-bc-89-1/" class="archive-article-date">
-  	<time datetime="2016-09-13T06:52:01.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-09-13</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>volley同样不适合大文件的下载，只能自己扩展了，我这里参考了Netroid,有兴趣的可以去分析下,文件下载模仿了图片的加载方式，添加了两个类 分别是FileDownloadRequest和FileDownloader。断点续传是根据http头里的Range 和Content-Range实现.</p>
-<p>Range用于请求头中，指定第一个字节的位置和最后一个字节的位置，一般格式：</p>
-<p>Range:(unit=first byte pos)-[last byte pos]</p>
-<p>Content-Range用于响应头，指定整个实体中的一部分的插入位置，他也指示了整个实体的长度。在服务器向客户返回一个部分响应，它必须描述响应覆盖的范围和整个实体长度。一般格式：</p>
-<p>Content-Range: bytes (unit first byte pos) - [last byte pos]/[entity legth]</p>
-<p>例如：</p>
-<p>Range: bytes=0-801       一般下载整个文件是 0-，没有后边的801</p>
-<p>Content-Range: bytes 2753525-41526127/41526128        斜杠后边的是文件总大小</p>
-<p>关键代码：</p>
-<p><pre class="html">public Map&lt;String, String&gt; getHeaders() throws AuthFailureError {<br>        Map&lt;String,String&gt; map = new HashMap&lt;String,String&gt;();<br>        map.put(“Range”, “bytes=” + mTemporaryFile.length() + “-“);<br>        return map;<br>    }</pre><br>&nbsp;</p>
-<p><pre class="html">public byte[] handleResponse(HttpResponse response, ResponseDelivery delivery) throws IOException, ServerError {<br>        // Content-Length might be negative when use HttpURLConnection because it default header Accept-Encoding is gzip,<br>        // we can force set the Accept-Encoding as identity in prepare() method to slove this problem but also disable gzip response.<br>        HttpEntity entity = response.getEntity();<br>        long fileSize = entity.getContentLength();<br>        if (fileSize &lt;= 0) {<br>            VolleyLog.d(“Response doesn’t present Content-Length!”);<br>        }</pre></p>
-<pre><code>    long downloadedSize = mTemporaryFile.length();
-    boolean isSupportRange = HttpUtils.isSupportRange(response);
-    if (isSupportRange) {
-        fileSize += downloadedSize;
-
-        // Verify the Content-Range Header, to ensure temporary file is part of the whole file.
-        // Sometime, temporary file length add response content-length might greater than actual file length,
-        // in this situation, we consider the temporary file is invalid, then throw an exception.
-        String realRangeValue = HttpUtils.getHeader(response, &quot;Content-Range&quot;);
-        Log.e(&quot;FileDownloadRequest&quot;,&quot;response header Content-Range:&quot; + realRangeValue);
-        // response Content-Range may be null when &quot;Range=bytes=0-&quot;
-        if (!TextUtils.isEmpty(realRangeValue)) {
-            String assumeRangeValue = &quot;bytes &quot; + downloadedSize + &quot;-&quot; + (fileSize - 1);
-            Log.e(&quot;FileDownloadRequest&quot;,&quot;assumeRangeValue:&quot; + assumeRangeValue);
-            if (TextUtils.indexOf(realRangeValue, assumeRangeValue) == -1) {
-                throw new IllegalStateException(
-                        &quot;The Content-Range Header is invalid Assume[&quot; + assumeRangeValue + &quot;] vs Real[&quot; + realRangeValue + &quot;], &quot; +
-                                &quot;please remove the temporary file [&quot; + mTemporaryFile + &quot;].&quot;);
-            }
+        <p><span style="font-size: large;">Android的线程可分为UI线程和工作线程，UI线程默认开启消息循环，但是创建的工作线程默认是没有消息循环 和消息队列的，如果想让该 线程具有消息队列和消息循环，需要在线程中首先调用Looper.prepare()来创建消息队列，然后调用Looper.loop()进入消息循环。 如下例所示：</span></p>
+<p><pre class="java">class LooperThread extends Thread {<br>      public Handler mHandler;</pre></p>
+<pre><code>public void run() {
+    Looper.prepare();
+
+    mHandler = new Handler() {
+        public void handleMessage(Message msg) {
+            // process incoming messages here
         }
+    };
+
+    Looper.loop();
+}
+</code></pre><p>  }<br>Android的Looper和HandlerLooper:每一个线程都可以产生一个Looper,用来管理线程的Message，Looper对象会建立一个MessgaeQueue数据结构来存放message。</p>
+<p>Handler:与Looper沟通的对象，可以push消息或者runnable对象到MessgaeQueue，也可以从MessageQueue得到消息。</p>
+<p><div>Activity是一个UI线程，运行于主线程中，Android系统在启动的时候会为Activity创建一个消息队列和消息循环（Looper）。详细实现请参考ActivityThread.java文件</div></p>
+<p><div>Android应用程序进程在启动的时候，会在进程中加载ActivityThread类，并且执行这个类的main函数，应用程序的消息循环过程就是在这个main函数里面实现的</div></p>
+<p><pre class="java"> public static void main(String[] args) {<br>        SamplingProfilerIntegration.start();</pre></p>
+<pre><code>    // CloseGuard defaults to true and can be quite spammy.  We
+    // disable it here, but selectively enable it later (via
+    // StrictMode) on debug builds, but using DropBox, not logs.
+    CloseGuard.setEnabled(false);
+
+    Environment.initForCurrentUser();
+
+    // Set the reporter for event logging in libcore
+    EventLogger.setReporter(new EventLoggingReporter());
+
+    Security.addProvider(new AndroidKeyStoreProvider());
+
+    Process.setArgV0(&quot;&amp;lt;pre-initialized&amp;gt;&quot;);
+
+    Looper.prepareMainLooper();
+
+    ActivityThread thread = new ActivityThread();
+    thread.attach(false);
+
+    if (sMainThreadHandler == null) {
+        sMainThreadHandler = thread.getHandler();
     }
 
-    // Compare the store file size(after download successes have) to server-side Content-Length.
-    // temporary file will rename to store file after download success, so we compare the
-    // Content-Length to ensure this request already download or not.
-    if (fileSize &amp;gt; 0 &amp;amp;&amp;amp; mStoreFile.length() == fileSize) {
-        // Rename the store file to temporary file, mock the download success. ^_^
-        mStoreFile.renameTo(mTemporaryFile);
+    AsyncTask.init();
 
-        // Deliver download progress.
-        delivery.postProgress(this, fileSize, fileSize);
-        return null;
+    if (false) {
+        Looper.myLooper().setMessageLogging(new
+                LogPrinter(Log.DEBUG, &quot;ActivityThread&quot;));
     }
 
-    RandomAccessFile tmpFileRaf = new RandomAccessFile(mTemporaryFile, &quot;rw&quot;);
+    Looper.loop();
 
-    // If server-side support range download, we seek to last point of the temporary file.
-    if (isSupportRange) {
-        tmpFileRaf.seek(downloadedSize);
-    } else {
-        // If not, truncate the temporary file then start download from beginning.
-        tmpFileRaf.setLength(0);
-        downloadedSize = 0;
-    }
-
-    try {
-        InputStream in = entity.getContent();
-        // Determine the response gzip encoding, support for HttpClientStack download.
-        if (HttpUtils.isGzipContent(response) &amp;amp;&amp;amp; !(in instanceof GZIPInputStream)) {
-            in = new GZIPInputStream(in);
-        }
-        byte[] buffer = new byte[6 * 1024]; // 6K buffer
-        int offset;
-
-        while ((offset = in.read(buffer)) != -1) {
-            tmpFileRaf.write(buffer, 0, offset);
-
-            downloadedSize += offset;
-            delivery.postProgress(this, fileSize, downloadedSize);
-
-            if (isCanceled()) {
-                delivery.postCancel(this);
-                break;
-            }
-        }
-    } finally {
-        try {
-            // Close the InputStream and release the resources by &quot;consuming the content&quot;.
-            if (entity != null) entity.consumeContent();
-        } catch (Exception e) {
-            // This can happen if there was an exception above that left the entity in
-            // an invalid state.
-            VolleyLog.v(&quot;Error occured when calling consumingContent&quot;);
-        }
-        tmpFileRaf.close();
-    }
-
-    return null;
+    throw new RuntimeException(&quot;Main thread loop unexpectedly exited&quot;);
 }&lt;/pre&gt;
-</code></pre><p>demo连接：<a href="http://download.csdn.net/detail/s569646547/9098291" target="_blank" rel="noopener">http://download.csdn.net/detail/s569646547/9098291</a></p>
+</code></pre><p><span style="font-size: large;">贴一篇别人分析的源码和自己的理解<br></span></p>
+<p><pre class="java">//Looper类分析<br>public class Looper {<br>   //static变量，判断是否打印调试信息。<br>    private static final boolean DEBUG = false;<br>    private static final boolean localLOGV = DEBUG ? Config.LOGD : Config.LOGV;</pre></p>
+<pre><code>// sThreadLocal.get() will return null unless you&apos;ve called prepare().
+</code></pre><p>//线程本地存储功能的封装，TLS，thread local storage,什么意思呢？因为存储要么在栈上，例如函数内定义的内部变量。要么在堆上，例如new或者malloc出来的东西<br>//但是现在的系统比如Linux和windows都提供了线程本地存储空间，也就是这个存储空间是和线程相关的，一个线程内有一个内部存储空间，这样的话我把线程相关的东西就存储到<br>//这个线程的TLS中，就不用放在堆上而进行同步操作了。<br>//本人理解：线程局部变量，内部是类map存储，key为它本身，value是当前线程相关的变量副本<br> private static final ThreadLocal sThreadLocal = new ThreadLocal();<br>//消息队列，MessageQueue，看名字就知道是个queue..<br>    final MessageQueue mQueue;<br>    volatile boolean mRun;<br>//和本looper相关的那个线程，初始化为null<br>    Thread mThread;<br>    private Printer mLogging = null;<br>//static变量，代表一个UI Process（也可能是service吧，这里默认就是UI）的主线程<br>    private static Looper mMainLooper = null;</p>
+<pre><code>/** Initialize the current thread as a looper.
+ * This gives you a chance to create handlers that then reference
+ * this looper, before actually starting the loop. Be sure to call
+ * {@link #loop()} after calling this method, and end it by calling
+ * {@link #quit()}.
+ */
+</code></pre><p>//往TLS中设上这个Looper对象的，如果这个线程已经设过了ｌｏｏｐｅｒ的话就会报错<br>//这说明，一个线程只能设一个looper<br>    public static final void prepare() {<br>        if (sThreadLocal.get() != null) {<br>            throw new RuntimeException(“Only one Looper may be created per thread”);<br>        }<br>        sThreadLocal.set(new Looper());<br>    }</p>
+<pre><code>/** Initialize the current thread as a looper, marking it as an application&apos;s main 
+ *  looper. The main looper for your application is created by the Android environment,
+ *  so you should never need to call this function yourself.
+ * {@link #prepare()}
+ */
+</code></pre><p> //由framework设置的UI程序的主消息循环，注意，这个主消息循环是不会主动退出的<br>//<br>    public static final void prepareMainLooper() {<br>        prepare();<br>        setMainLooper(myLooper());<br>//判断主消息循环是否能退出….<br>//通过quit函数向looper发出退出申请<br>        if (Process.supportsProcesses()) {<br>            myLooper().mQueue.mQuitAllowed = false;<br>        }<br>    }</p>
+<pre><code>private synchronized static void setMainLooper(Looper looper) {
+    mMainLooper = looper;
+}
+
+/** Returns the application&apos;s main looper, which lives in the main thread of the application.
+ */
+public synchronized static final Looper getMainLooper() {
+    return mMainLooper;
+}
+
+/**
+ *  Run the message queue in this thread. Be sure to call
+ * {@link #quit()} to end the loop.
+ */
+</code></pre><p>//消息循环，整个程序就在这里while了。<br>//这个是static函数喔！<br>    public static final void loop() {<br>        Looper me = myLooper();//从该线程中取出对应的looper对象<br>        MessageQueue queue = me.mQueue;//取消息队列对象…<br>        while (true) {<br>            Message msg = queue.next(); // might block取消息队列中的一个待处理消息..<br>            //if (!me.mRun) {//是否需要退出？mRun是个volatile变量，跨线程同步的，应该是有地方设置它。<br>            //    break;<br>            //}<br>            if (msg != null) {<br>                if (msg.target == null) {<br>                    // No target is a magic identifier for the quit message.<br>                    return;<br>                }<br>                if (me.mLogging!= null) me.mLogging.println(<br>                        “&gt;&gt;&gt;&gt;&gt; Dispatching to “ + msg.target + “ “</p>
+<pre><code>                    + msg.callback + &quot;: &quot; + msg.what
+                    );
+            //msg.target目标handler
+            msg.target.dispatchMessage(msg);
+            if (me.mLogging!= null) me.mLogging.println(
+                    &quot;&amp;lt;&amp;lt;&amp;lt;&amp;lt;&amp;lt; Finished to    &quot; + msg.target + &quot; &quot;
+                    + msg.callback);
+            msg.recycle();
+        }
+    }
+}
+
+/**
+ * Return the Looper object associated with the current thread.  Returns
+ * null if the calling thread is not associated with a Looper.
+ */
+</code></pre><p>//返回和线程相关的looper<br>    public static final Looper myLooper() {<br>        return (Looper)sThreadLocal.get();<br>    }</p>
+<pre><code>/**
+ * Control logging of messages as they are processed by this Looper.  If
+ * enabled, a log message will be written to &amp;lt;var&amp;gt;printer&amp;lt;/var&amp;gt; 
+ * at the beginning and ending of each message dispatch, identifying the
+ * target Handler and message contents.
+ * 
+ * @param printer A Printer object that will receive log messages, or
+ * null to disable message logging.
+ */
+</code></pre><p>//设置调试输出对象，looper循环的时候会打印相关信息，用来调试用最好了。<br>    public void setMessageLogging(Printer printer) {<br>        mLogging = printer;<br>    }</p>
+<pre><code>/**
+ * Return the {@link MessageQueue} object associated with the current
+ * thread.  This must be called from a thread running a Looper, or a
+ * NullPointerException will be thrown.
+ */
+public static final MessageQueue myQueue() {
+    return myLooper().mQueue;
+}
+</code></pre><p>//创建一个新的looper对象，<br>//内部分配一个消息队列，设置mRun为true<br>    private Looper() {<br>        mQueue = new MessageQueue();<br>        mRun = true;<br>        mThread = Thread.currentThread();<br>    }</p>
+<pre><code>public void quit() {
+    Message msg = Message.obtain();
+    // NOTE: By enqueueing directly into the message queue, the
+    // message is left with a null target.  This is how we know it is
+    // a quit message.
+    mQueue.enqueueMessage(msg, 0);
+}
+
+/**
+ * Return the Thread associated with this Looper.
+ */
+public Thread getThread() {
+    return mThread;
+}
+//后面就简单了，打印，异常定义等。
+public void dump(Printer pw, String prefix) {
+    pw.println(prefix + this);
+    pw.println(prefix + &quot;mRun=&quot; + mRun);
+    pw.println(prefix + &quot;mThread=&quot; + mThread);
+    pw.println(prefix + &quot;mQueue=&quot; + ((mQueue != null) ? mQueue : &quot;(null&quot;));
+    if (mQueue != null) {
+        synchronized (mQueue) {
+            Message msg = mQueue.mMessages;
+            int n = 0;
+            while (msg != null) {
+                pw.println(prefix + &quot;  Message &quot; + n + &quot;: &quot; + msg);
+                n++;
+                msg = msg.next;
+            }
+            pw.println(prefix + &quot;(Total messages: &quot; + n + &quot;)&quot;);
+        }
+    }
+}
+
+public String toString() {
+    return &quot;Looper{&quot;
+        + Integer.toHexString(System.identityHashCode(this))
+        + &quot;}&quot;;
+}
+
+static class HandlerException extends Exception {
+
+    HandlerException(Message message, Throwable cause) {
+        super(createMessage(cause), cause);
+    }
+
+    static String createMessage(Throwable cause) {
+        String causeMsg = cause.getMessage();
+        if (causeMsg == null) {
+            causeMsg = cause.toString();
+        }
+        return causeMsg;
+    }
+}
+</code></pre><p>}<br>&nbsp;</p>
+<p><pre class="java">class Handler{<br>……….<br>//handler默认构造函数<br>public Handler() {<br>//这个if是干嘛用的暂时还不明白，涉及到java的深层次的内容了应该<br>        if (FIND_POTENTIAL_LEAKS) {<br>            final Class&lt;? extends Handler&gt; klass = getClass();<br>            if ((klass.isAnonymousClass() || klass.isMemberClass() || klass.isLocalClass()) &amp;&amp;<br>                    (klass.getModifiers() &amp; Modifier.STATIC) == 0) {<br>                Log.w(TAG, “The following Handler class should be static or leaks might occur: “ +<br>                    klass.getCanonicalName());<br>            }<br>        }<br>//获取本线程的looper对象<br>//如果本线程还没有设置looper，这回抛异常<br>        mLooper = Looper.myLooper();<br>        if (mLooper == null) {<br>            throw new RuntimeException(<br>                “Can’t create handler inside thread that has not called Looper.prepare()”);<br>        }<br>//无耻啊，直接把looper的queue和自己的queue搞成一个了<br>//这样的话，我通过handler的封装机制加消息的话，就相当于直接加到了looper的消息队列中去了<br>        mQueue = mLooper.mQueue;<br>        mCallback = null;<br>    }<br>//还有好几种构造函数，一个是带callback的，一个是带looper的<br>//由外部设置looper<br>    public Handler(Looper looper) {<br>        mLooper = looper;<br>        mQueue = looper.mQueue;<br>        mCallback = null;<br>    }<br>// 带callback的，一个handler可以设置一个callback。如果有callback的话，<br>//凡是发到通过这个handler发送的消息，都有callback处理，相当于一个总的集中处理<br>//待会看dispatchMessage的时候再分析<br>public Handler(Looper looper, Callback callback) {<br>        mLooper = looper;<br>        mQueue = looper.mQueue;<br>        mCallback = callback;<br>    }<br>//<br>//通过handler发送消息<br>//调用了内部的一个sendMessageDelayed<br>public final boolean sendMessage(Message msg)<br>    {<br>        return sendMessageDelayed(msg, 0);<br>    }<br>//FT，又封装了一层，这回是调用sendMessageAtTime了<br>//因为延时时间是基于当前调用时间的，所以需要获得绝对时间传递给sendMessageAtTime<br>public final boolean sendMessageDelayed(Message msg, long delayMillis)<br>    {<br>        if (delayMillis &lt; 0) {<br>            delayMillis = 0;<br>        }<br>        return sendMessageAtTime(msg, SystemClock.uptimeMillis() + delayMillis);<br>    }</pre></p>
+<p>public boolean sendMessageAtTime(Message msg, long uptimeMillis)<br>    {<br>        boolean sent = false;<br>        MessageQueue queue = mQueue;<br>        if (queue != null) {<br>//把消息的target设置为自己，然后加入到消息队列中<br>//对于队列这种数据结构来说，操作比较简单了<br>            msg.target = this;<br>            sent = queue.enqueueMessage(msg, uptimeMillis);<br>        }<br>        else {<br>            RuntimeException e = new RuntimeException(<br>                this + “ sendMessageAtTime() called with no mQueue”);<br>            Log.w(“Looper”, e.getMessage(), e);<br>        }<br>        return sent;<br>    }<br>//还记得looper中的那个消息循环处理吗<br>//从消息队列中得到一个消息后，会调用它的target的dispatchMesage函数<br>//message的target已经设置为handler了，所以<br>//最后会转到handler的msg处理上来<br>//这里有个处理流程的问题<br>public void dispatchMessage(Message msg) {<br>//如果msg本身设置了callback，则直接交给这个callback处理了<br>        if (msg.callback != null) {<br>            handleCallback(msg);<br>        } else {<br>//如果该handler的callback有的话，则交给这个callback处理了—相当于集中处理<br>          if (mCallback != null) {<br>                if (mCallback.handleMessage(msg)) {<br>                    return;<br>                }<br>           }<br>//否则交给派生处理,基类默认处理是什么都不干<br>            handleMessage(msg);<br>        }<br>    }<br>……….<br>}<br>总结：android线程间通信可通过handler来解决，工作线程向UI线程发送消 息，handler.sendMessage(Message msg)或者post(Runnable obj)一个runnable对象，UI线程向工作线程发送消息，首先要手动开启工作线程的消息循环，handler必须在工作线程的run方法中创建， 然后由UI线程发送消息或runnable对象到工作线程。</p>
 
       
 
@@ -1949,7 +371,7 @@ root   /自己的目录/www/teamtalk;
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/2016/09/13/volley-e6-89-a9-e5-b1-95-e6-96-87-e4-bb-b6-e6-96-ad-e7-82-b9-e4-b8-8b-e8-bd-bd-ef-bc-88-e6-94-af-e6-8c-81-e4-b8-8b-e8-bd-bd-e8-bf-9b-e5-ba-a6-ef-bc-89-1/">展开全文 >></a>
+          <a class="article-more-a" href="/2016/09/13/android-e7-9a-84-e6-b6-88-e6-81-af-e5-be-aa-e7-8e-af-e7-ba-bf-e7-a8-8b-e9-97-b4-e9-80-9a-e4-bf-a1/">展开全文 >></a>
         </p>
       
 
@@ -1979,117 +401,99 @@ root   /自己的目录/www/teamtalk;
 
 
   
-    <article id="post-volley-e6-89-a9-e5-b1-95-e6-96-87-e4-bb-b6-e6-96-ad-e7-82-b9-e4-b8-8b-e8-bd-bd-ef-bc-88-e6-94-af-e6-8c-81-e4-b8-8b-e8-bd-bd-e8-bf-9b-e5-ba-a6-ef-bc-89" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-44" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2016/09/13/volley-e6-89-a9-e5-b1-95-e6-96-87-e4-bb-b6-e6-96-ad-e7-82-b9-e4-b8-8b-e8-bd-bd-ef-bc-88-e6-94-af-e6-8c-81-e4-b8-8b-e8-bd-bd-e8-bf-9b-e5-ba-a6-ef-bc-89/">Volley扩展——文件断点下载（支持下载进度）</a>
+      <a class="article-title" href="/2016/09/13/44/">Android事件传递机制</a>
     </h1>
   
 
         
-        <a href="/2016/09/13/volley-e6-89-a9-e5-b1-95-e6-96-87-e4-bb-b6-e6-96-ad-e7-82-b9-e4-b8-8b-e8-bd-bd-ef-bc-88-e6-94-af-e6-8c-81-e4-b8-8b-e8-bd-bd-e8-bf-9b-e5-ba-a6-ef-bc-89/" class="archive-article-date">
-  	<time datetime="2016-09-13T06:52:01.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-09-13</time>
+        <a href="/2016/09/13/44/" class="archive-article-date">
+  	<time datetime="2016-09-13T06:43:59.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-09-13</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>volley同样不适合大文件的下载，只能自己扩展了，我这里参考了Netroid,有兴趣的可以去分析下,文件下载模仿了图片的加载方式，添加了两个类 分别是FileDownloadRequest和FileDownloader。断点续传是根据http头里的Range 和Content-Range实现.</p>
-<p>Range用于请求头中，指定第一个字节的位置和最后一个字节的位置，一般格式：</p>
-<p>Range:(unit=first byte pos)-[last byte pos]</p>
-<p>Content-Range用于响应头，指定整个实体中的一部分的插入位置，他也指示了整个实体的长度。在服务器向客户返回一个部分响应，它必须描述响应覆盖的范围和整个实体长度。一般格式：</p>
-<p>Content-Range: bytes (unit first byte pos) - [last byte pos]/[entity legth]</p>
-<p>例如：</p>
-<p>Range: bytes=0-801       一般下载整个文件是 0-，没有后边的801</p>
-<p>Content-Range: bytes 2753525-41526127/41526128        斜杠后边的是文件总大小</p>
-<p>关键代码：</p>
-<p><pre class="html">public Map&lt;String, String&gt; getHeaders() throws AuthFailureError {<br>        Map&lt;String,String&gt; map = new HashMap&lt;String,String&gt;();<br>        map.put(“Range”, “bytes=” + mTemporaryFile.length() + “-“);<br>        return map;<br>    }</pre><br>&nbsp;</p>
-<p><pre class="html">public byte[] handleResponse(HttpResponse response, ResponseDelivery delivery) throws IOException, ServerError {<br>        // Content-Length might be negative when use HttpURLConnection because it default header Accept-Encoding is gzip,<br>        // we can force set the Accept-Encoding as identity in prepare() method to slove this problem but also disable gzip response.<br>        HttpEntity entity = response.getEntity();<br>        long fileSize = entity.getContentLength();<br>        if (fileSize &lt;= 0) {<br>            VolleyLog.d(“Response doesn’t present Content-Length!”);<br>        }</pre></p>
-<pre><code>    long downloadedSize = mTemporaryFile.length();
-    boolean isSupportRange = HttpUtils.isSupportRange(response);
-    if (isSupportRange) {
-        fileSize += downloadedSize;
+        <p><span style="font-size: large;">最近在做一个图片，文字拖拽缩放的控件，所以研究了下android的事件传递机制，记录在此。</span></p>
+<p><span style="font-size: large;"><strong>一、Activity——dispatchTouchEvent和onTouchEvent</strong></span></p>
+<p><span style="font-size: large;">    先来看下Activity里的dispatchTouchEvent源码</span></p>
+<p><pre class="java">public boolean dispatchTouchEvent(MotionEvent ev) {<br>        if (ev.getAction() == MotionEvent.ACTION_DOWN) {<br>            onUserInteraction();<br>        }<br>        if (getWindow().superDispatchTouchEvent(ev)) {<br>            return true;<br>        }<br>        return onTouchEvent(ev);<br>    }</pre><br>getWindow().superDispatchTouchEvent(ev)，getWindow()返回的是一个PhoneWindow对象，执行了superDispatchTouchEvent(ev)方法，如果返回true表示事件被消费掉。</p>
+<p><pre class="java">  @Override<br>    public boolean superDispatchTouchEvent(MotionEvent event) {<br>        return mDecor.superDispatchTouchEvent(event);<br>    }<br></pre><br>mDecor是一个DecorView对象，继承自FrameLayout，它是一个Activity的root view，通过super.dispatchTouchEvent会把事件分发给各个子view及Activity onCreate方法中setContentView里赋值的view。</p>
+<p><span style="font-size: large;"><strong>二、ViewGroup<span style="font-size: large;">——dispatchTouchEvent、</span>onInterceptTouchEvent和<span style="font-size: large;">onTouchEvent</span></strong></span></p>
+<p><pre class="java">            // Check for interception.<br>            final boolean intercepted;<br>            if (actionMasked == MotionEvent.ACTION_DOWN<br>                    || mFirstTouchTarget != null) {<br>                final boolean disallowIntercept = (mGroupFlags &amp; FLAG_DISALLOW_INTERCEPT) != 0;<br>                if (!disallowIntercept) {<br>                    intercepted = onInterceptTouchEvent(ev);<br>                    ev.setAction(action); // restore action in case it was changed<br>                } else {<br>                    intercepted = false;<br>                }<br>            } else {<br>                // There are no touch targets and this action is not an initial down<br>                // so this view group continues to intercept touches.<br>                intercepted = true;<br>            }</pre><br>dispatchTouchEvent代码比较多，不全贴了，上边的代码是检查是否拦截事件的，onInterceptTouchEvent(ev)里代码很简单就返回了个false，disallowIntercept用来控制是否禁用拦截事件，可以通过<span style="font-family: Consolas,&quot;&quot;;"><span style="font-family: Consolas,&quot;&quot;;">requestDisallowInterceptTouchEvent方法改变值。如果事件没被拦截会执行下面的代码：</span></span></p>
+<p><pre class="java">                    final int childrenCount = mChildrenCount;<br>                    if (newTouchTarget == null &amp;&amp; childrenCount != 0) {<br>                        final float x = ev.getX(actionIndex);<br>                        final float y = ev.getY(actionIndex);<br>                        // Find a child that can receive the event.<br>                        // Scan children from front to back.<br>                        final View[] children = mChildren;</pre></p>
+<pre><code>    final boolean customOrder = isChildrenDrawingOrderEnabled();
+    for (int i = childrenCount - 1; i &amp;gt;= 0; i--) {
+        final int childIndex = customOrder ?
+                getChildDrawingOrder(childrenCount, i) : i;
+        final View child = children[childIndex];
+        if (!canViewReceivePointerEvents(child)
+                || !isTransformedTouchPointInView(x, y, child, null)) {
+            continue;
+        }
 
-        // Verify the Content-Range Header, to ensure temporary file is part of the whole file.
-        // Sometime, temporary file length add response content-length might greater than actual file length,
-        // in this situation, we consider the temporary file is invalid, then throw an exception.
-        String realRangeValue = HttpUtils.getHeader(response, &quot;Content-Range&quot;);
-        Log.e(&quot;FileDownloadRequest&quot;,&quot;response header Content-Range:&quot; + realRangeValue);
-        // response Content-Range may be null when &quot;Range=bytes=0-&quot;
-        if (!TextUtils.isEmpty(realRangeValue)) {
-            String assumeRangeValue = &quot;bytes &quot; + downloadedSize + &quot;-&quot; + (fileSize - 1);
-            Log.e(&quot;FileDownloadRequest&quot;,&quot;assumeRangeValue:&quot; + assumeRangeValue);
-            if (TextUtils.indexOf(realRangeValue, assumeRangeValue) == -1) {
-                throw new IllegalStateException(
-                        &quot;The Content-Range Header is invalid Assume[&quot; + assumeRangeValue + &quot;] vs Real[&quot; + realRangeValue + &quot;], &quot; +
-                                &quot;please remove the temporary file [&quot; + mTemporaryFile + &quot;].&quot;);
-            }
+        newTouchTarget = getTouchTarget(child);
+        if (newTouchTarget != null) {
+            // Child is already receiving touch within its bounds.
+            // Give it the new pointer in addition to the ones it is handling.
+            newTouchTarget.pointerIdBits |= idBitsToAssign;
+            break;
+        }
+
+        resetCancelNextUpFlag(child);
+        if (dispatchTransformedTouchEvent(ev, false, child, idBitsToAssign)) {
+            // Child wants to receive touch within its bounds.
+            mLastTouchDownTime = ev.getDownTime();
+            mLastTouchDownIndex = childIndex;
+            mLastTouchDownX = ev.getX();
+            mLastTouchDownY = ev.getY();
+            newTouchTarget = addTouchTarget(child, idBitsToAssign);
+            alreadyDispatchedToNewTouchTarget = true;
+            break;
         }
     }
-
-    // Compare the store file size(after download successes have) to server-side Content-Length.
-    // temporary file will rename to store file after download success, so we compare the
-    // Content-Length to ensure this request already download or not.
-    if (fileSize &amp;gt; 0 &amp;amp;&amp;amp; mStoreFile.length() == fileSize) {
-        // Rename the store file to temporary file, mock the download success. ^_^
-        mStoreFile.renameTo(mTemporaryFile);
-
-        // Deliver download progress.
-        delivery.postProgress(this, fileSize, fileSize);
-        return null;
-    }
-
-    RandomAccessFile tmpFileRaf = new RandomAccessFile(mTemporaryFile, &quot;rw&quot;);
-
-    // If server-side support range download, we seek to last point of the temporary file.
-    if (isSupportRange) {
-        tmpFileRaf.seek(downloadedSize);
-    } else {
-        // If not, truncate the temporary file then start download from beginning.
-        tmpFileRaf.setLength(0);
-        downloadedSize = 0;
-    }
-
-    try {
-        InputStream in = entity.getContent();
-        // Determine the response gzip encoding, support for HttpClientStack download.
-        if (HttpUtils.isGzipContent(response) &amp;amp;&amp;amp; !(in instanceof GZIPInputStream)) {
-            in = new GZIPInputStream(in);
-        }
-        byte[] buffer = new byte[6 * 1024]; // 6K buffer
-        int offset;
-
-        while ((offset = in.read(buffer)) != -1) {
-            tmpFileRaf.write(buffer, 0, offset);
-
-            downloadedSize += offset;
-            delivery.postProgress(this, fileSize, downloadedSize);
-
-            if (isCanceled()) {
-                delivery.postCancel(this);
-                break;
-            }
-        }
-    } finally {
-        try {
-            // Close the InputStream and release the resources by &quot;consuming the content&quot;.
-            if (entity != null) entity.consumeContent();
-        } catch (Exception e) {
-            // This can happen if there was an exception above that left the entity in
-            // an invalid state.
-            VolleyLog.v(&quot;Error occured when calling consumingContent&quot;);
-        }
-        tmpFileRaf.close();
-    }
-
-    return null;
 }&lt;/pre&gt;
-</code></pre><p>demo连接：<a href="http://download.csdn.net/detail/s569646547/9098291" target="_blank" rel="noopener">http://download.csdn.net/detail/s569646547/9098291</a></p>
+</code></pre><p>遍历了所有子view，找到点击的view执行dispatchTransformedTouchEvent方法：</p>
+<p><pre class="java">if (child == null || child.hasIdentityMatrix()) {<br>                if (child == null) {<br>                    handled = super.dispatchTouchEvent(event);<br>                } else {<br>                    final float offsetX = mScrollX - child.mLeft;<br>                    final float offsetY = mScrollY - child.mTop;<br>                    event.offsetLocation(offsetX, offsetY);</pre></p>
+<pre><code>        handled = child.dispatchTouchEvent(event);
+
+        event.offsetLocation(-offsetX, -offsetY);
+    }
+    return handled;
+}&lt;/pre&gt;
+</code></pre><p>可以看到child.dispatchTouchEvent(event)，所以ViewGroup的dispatchTouchEvent依次调用了子view的<span style="font-size: large;"><span style="font-size: large;">dispatchTouchEvent</span></span>方法，当子view的<span style="font-size: large;"><span style="font-size: large;">dispatchTouchEvent</span></span>方法返回true时事件到此结束，返回false时会去执行super.<span style="font-size: large;">dispatchTouchEvent</span>方法，也就是父类View的<span style="font-size: large;">dispatchTouchEvent方法，下面介绍View的<span style="font-size: large;"><span style="font-size: large;">dispatchTouchEvent</span>方法；</span></span></p>
+<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">三、View——<span style="font-size: large;"><span style="font-size: large;">dispatchTouchEvent</span></span>、onTouchEvent</span></span></span></p>
+<p><span style="font-size: large;"><span style="font-size: large;">先来看dispatchTouchEvent：</span></span></p>
+<p><pre class="java">public boolean dispatchTouchEvent(MotionEvent event) {<br>        if (mInputEventConsistencyVerifier != null) {<br>            mInputEventConsistencyVerifier.onTouchEvent(event, 0);<br>        }</pre></p>
+<pre><code>    if (onFilterTouchEventForSecurity(event)) {
+        //noinspection SimplifiableIfStatement
+        ListenerInfo li = mListenerInfo;
+        if (li != null &amp;amp;&amp;amp; li.mOnTouchListener != null &amp;amp;&amp;amp; (mViewFlags &amp;amp; ENABLED_MASK) == ENABLED
+                &amp;amp;&amp;amp; li.mOnTouchListener.onTouch(this, event)) {
+            return true;
+        }
+
+        if (onTouchEvent(event)) {
+            return true;
+        }
+    }
+
+    if (mInputEventConsistencyVerifier != null) {
+        mInputEventConsistencyVerifier.onUnhandledEvent(event, 0);
+    }
+    return false;
+}&lt;/pre&gt;
+</code></pre><p>判断了mOnTouchListener是否为空和它的返回值，如果不为空并且返回true，dispatchTouchEvent直接返回true，否则执行onTouchEvent(event)，<span style="font-size: large;"><span style="font-size: large;">onTouchEvent</span></span>的默认返回值与CLICKABLE和LONG_CLICKABLE属性有关，例如button默认返回true，而textview默认返回false。如果<span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">onTouchEvent</span></span></span>返回true及<span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">dispatchTouchEvent</span></span></span></span></span>返回true时间传递结束，否则会执行父布局的<span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">onTouchEvent</span></span></span>。</p>
+<p><span style="font-size: large;"><span style="font-size: large;">第一次写的有点乱<br></span></span></p>
+<p><span style="font-size: large;"></span></p>
+<p></p>
 
       
 
@@ -2113,7 +517,7 @@ root   /自己的目录/www/teamtalk;
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/2016/09/13/volley-e6-89-a9-e5-b1-95-e6-96-87-e4-bb-b6-e6-96-ad-e7-82-b9-e4-b8-8b-e8-bd-bd-ef-bc-88-e6-94-af-e6-8c-81-e4-b8-8b-e8-bd-bd-e8-bf-9b-e5-ba-a6-ef-bc-89/">展开全文 >></a>
+          <a class="article-more-a" href="/2016/09/13/44/">展开全文 >></a>
         </p>
       
 
@@ -2143,135 +547,303 @@ root   /自己的目录/www/teamtalk;
 
 
   
-    <article id="post-volley-e6-89-a9-e5-b1-95-e6-96-87-e4-bb-b6-e4-b8-8a-e4-bc-a0-ef-bc-88-e6-94-af-e6-8c-81-e8-bf-9b-e5-ba-a6-e6-9d-a1-ef-bc-89-1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-centos-e5-bc-80-e6-9c-ba-e8-87-aa-e5-90-af-e5-8a-a8redis" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2016/09/13/volley-e6-89-a9-e5-b1-95-e6-96-87-e4-bb-b6-e4-b8-8a-e4-bc-a0-ef-bc-88-e6-94-af-e6-8c-81-e8-bf-9b-e5-ba-a6-e6-9d-a1-ef-bc-89-1/">Volley扩展——文件上传（支持进度条）</a>
+      <a class="article-title" href="/2016/07/22/centos-e5-bc-80-e6-9c-ba-e8-87-aa-e5-90-af-e5-8a-a8redis/">Centos开机自启动redis</a>
     </h1>
   
 
         
-        <a href="/2016/09/13/volley-e6-89-a9-e5-b1-95-e6-96-87-e4-bb-b6-e4-b8-8a-e4-bc-a0-ef-bc-88-e6-94-af-e6-8c-81-e8-bf-9b-e5-ba-a6-e6-9d-a1-ef-bc-89-1/" class="archive-article-date">
-  	<time datetime="2016-09-13T06:51:32.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-09-13</time>
+        <a href="/2016/07/22/centos-e5-bc-80-e6-9c-ba-e8-87-aa-e5-90-af-e5-8a-a8redis/" class="archive-article-date">
+  	<time datetime="2016-07-22T09:12:40.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-07-22</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>volley是一个轻量级的开源网络通信框架，开源的好处就是可以自由定制自己需要的jar包。volley里网络通信时android2.3以上用的 HttpUrlConnection,2.3以下用的HttpClient，我做的改动只考虑了2.3以上，不支持2.3版本以下。 HttpUrlConnection默认传输数据是将数据全部写到内存中再发送到服务端，Volley就是采用默认的方式，这样在上传大文件时很容易就 out of memory，有一种解决办法是设置每次传输流的大小：</p>
-<p>已知文件大小：connection .setFixedLengthStreamingMode（long l）;</p>
-<p>不知道文件大小：connection.setChunkedStreamingMode(1024); //建议使用</p>
-<p>android的文件上传一般都是模拟表单，也可以直接socket传，我这里是集成了表单上传，下面是关键类：</p>
-<p><pre class="java">public class MultipartRequest extends Request&lt;String&gt; {<br>    private final Listener&lt;String&gt; mListener;<br>    private Map&lt;String, String&gt; headerMap;<br>    private Map&lt;String, String&gt; mParams;<br>    private FormFile[] files;<br>    private String BOUNDARY = “———7dc05dba8f3e19”;</pre></p>
-<pre><code>public MultipartRequest(String url, Listener&amp;lt;String&amp;gt; listener, Map&amp;lt;String, String&amp;gt; params, FormFile[] files) {
-    this(Method.POST, url, listener, params, files);
-}
+        <div class="blog-abstract"><strong>摘要</strong><br><div>Centos开机自启动redis</div><br></div><br><div class="blog-body"><br><div class="BlogContent"><br><br><em>   修改redis.conf，打开后台运行选项：<br><br>    <span class="hljs-comment"># By default Redis does not run as a daemon. Use ‘yes’ if you need it.</span><br>    <span class="hljs-comment"># Note that Redis will write a pid file in /var/run/redis.pid when daemonized.</span><br>    <span class="hljs-attribute">daemonize</span> <span class="hljs-literal">yes</span>`
 
-public MultipartRequest(int method, String url, Listener&amp;lt;String&amp;gt; listener, Map&amp;lt;String, String&amp;gt; params, FormFile[] files) {
-    super(method, url, listener);
-    mListener = listener;
-    mParams = params;
-    this.files = files;
-}
+</em>   编写脚本，vim /etc/init.d/redis:<br>    <pre class="brush:shell; toolbar: true; auto-links: false;"><code>&lt;span class=&quot;hljs-comment&quot;&gt;# chkconfig: 2345 10 90&lt;/span&gt;
+    &lt;span class=&quot;hljs-comment&quot;&gt;# description: Start and Stop redis&lt;/span&gt;
 
-@Override
-public Map&amp;lt;String, String&amp;gt; getHeaders() throws AuthFailureError {
-    headerMap = new HashMap&amp;lt;String, String&amp;gt;();
-    headerMap.put(&quot;Charset&quot;, &quot;UTF-8&quot;);
-    //Keep-Alive
-    headerMap.put(&quot;Connection&quot;, &quot;Keep-Alive&quot;);
-    headerMap.put(&quot;Content-Type&quot;, &quot;multipart/form-data; boundary=&quot; + BOUNDARY);
-    return headerMap;
-}
+    PATH=/usr/&lt;span class=&quot;hljs-built_in&quot;&gt;local&lt;/span&gt;/bin:/sbin:/usr/bin:/bin
 
-@Override
-public byte[] getBody() throws AuthFailureError {
-    //传参数
-    StringBuilder sb = new StringBuilder();
-    for (Map.Entry&amp;lt;String, String&amp;gt; entry : mParams.entrySet()) {
-        // 构建表单字段内容
-        sb.append(&quot;--&quot;);
-        sb.append(BOUNDARY);
-        sb.append(&quot;\r\n&quot;);
-        sb.append(&quot;Content-Disposition: form-data; name=\&quot;&quot; + entry.getKey() + &quot;\&quot;\r\n\r\n&quot;);
-        sb.append(entry.getValue());
-        sb.append(&quot;\r\n&quot;);
-    }
-    return sb.toString().getBytes();
-}
+    REDISPORT=6379 &lt;span class=&quot;hljs-comment&quot;&gt;#实际环境而定&lt;/span&gt;
+    EXEC=/usr/&lt;span class=&quot;hljs-built_in&quot;&gt;local&lt;/span&gt;/redis/src/redis-server &lt;span class=&quot;hljs-comment&quot;&gt;#实际环境而定&lt;/span&gt;
+    REDIS_CLI=/usr/&lt;span class=&quot;hljs-built_in&quot;&gt;local&lt;/span&gt;/redis/src/redis-cli &lt;span class=&quot;hljs-comment&quot;&gt;#实际环境而定&lt;/span&gt;
 
-@Override
-public void handRequest(OutputStream out) {
-    DataOutputStream dos = (DataOutputStream) out;
-    try {
-        //发送文件数据
-        if (files != null) {
-            for (FormFile file : files) {
-                // 发送文件数据
-                StringBuilder split = new StringBuilder();
-                split.append(&quot;--&quot;);
-                split.append(BOUNDARY);
-                split.append(&quot;\r\n&quot;);
-                split.append(&quot;Content-Disposition: form-data;name=\&quot;&quot; + file.getParameterName() + &quot;\&quot;;filename=\&quot;&quot; + file.getFilname() + &quot;\&quot;\r\n&quot;);
-                split.append(&quot;Content-Type: &quot; + file.getContentType() + &quot;\r\n\r\n&quot;);
-                dos.write(split.toString().getBytes());
-                if (file.getInStream() != null) {
-                    byte[] buffer = new byte[1024];
-                    int len = -1;
-                    int count = 0;
-                    while ((len = file.getInStream().read(buffer)) != -1) {
-                        dos.write(buffer, 0, len);
-                        count += len;
-                        if (mListener != null) {
-                            mListener.onProgressChange(file.getFileSize(), count);
-                        }
-                    }
-                    count = 0;
-                    file.getInStream().close();
-                } else {
-                    dos.write(file.getData(), 0, file.getData().length);
-                }
-                dos.write(&quot;\r\n&quot;.getBytes());
-            }
-        }
-        dos.writeBytes(&quot;--&quot; + BOUNDARY + &quot;--\r\n&quot;);
-        dos.flush();
-    } catch (IOException e) {
-        mListener.onError(new VolleyError(e.toString()));
-        try {
-            dos.close();
-        } catch (IOException e1) {
-            e1.printStackTrace();
-        }
-    }
-}
+    PIDFILE=/var/run/redis.pid
+    CONF=&lt;span class=&quot;hljs-string&quot;&gt;&quot;/usr/local/redis/redis.conf&quot;&lt;/span&gt; &lt;span class=&quot;hljs-comment&quot;&gt;#实际环境而定&lt;/span&gt;
 
-@Override
-protected Response&amp;lt;String&amp;gt; parseNetworkResponse(NetworkResponse response) {
-    String parsed;
-    try {
-        parsed = new String(response.data, HttpHeaderParser.parseCharset(response.headers));
-    } catch (UnsupportedEncodingException e) {
-        parsed = new String(response.data);
-    }
-    return Response.success(parsed, HttpHeaderParser.parseCacheHeaders(response));
-}
+    &lt;span class=&quot;hljs-keyword&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;hljs-string&quot;&gt;&quot;&lt;span class=&quot;hljs-variable&quot;&gt;$1&lt;/span&gt;&quot;&lt;/span&gt; &lt;span class=&quot;hljs-keyword&quot;&gt;in&lt;/span&gt;
+            start)
+                    &lt;span class=&quot;hljs-keyword&quot;&gt;if&lt;/span&gt; [ &lt;span class=&quot;hljs-_&quot;&gt;-f&lt;/span&gt; &lt;span class=&quot;hljs-variable&quot;&gt;$PIDFILE&lt;/span&gt; ]
+                    &lt;span class=&quot;hljs-keyword&quot;&gt;then&lt;/span&gt;
+                            &lt;span class=&quot;hljs-built_in&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;hljs-string&quot;&gt;&quot;&lt;span class=&quot;hljs-variable&quot;&gt;$PIDFILE&lt;/span&gt; exists, process is already running or crashed.&quot;&lt;/span&gt;
+                    &lt;span class=&quot;hljs-keyword&quot;&gt;else&lt;/span&gt;
+                            &lt;span class=&quot;hljs-built_in&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;hljs-string&quot;&gt;&quot;Starting Redis server...&quot;&lt;/span&gt;
+                            &lt;span class=&quot;hljs-variable&quot;&gt;$EXEC&lt;/span&gt; &lt;span class=&quot;hljs-variable&quot;&gt;$CONF&lt;/span&gt;
+                    &lt;span class=&quot;hljs-keyword&quot;&gt;fi&lt;/span&gt;
+                    &lt;span class=&quot;hljs-keyword&quot;&gt;if&lt;/span&gt; [ &lt;span class=&quot;hljs-string&quot;&gt;&quot;$?&quot;&lt;/span&gt;=&lt;span class=&quot;hljs-string&quot;&gt;&quot;0&quot;&lt;/span&gt; ]
+                    &lt;span class=&quot;hljs-keyword&quot;&gt;then&lt;/span&gt;
+                            &lt;span class=&quot;hljs-built_in&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;hljs-string&quot;&gt;&quot;Redis is running...&quot;&lt;/span&gt;
+                    &lt;span class=&quot;hljs-keyword&quot;&gt;fi&lt;/span&gt;
+                    ;;
+            stop)
+                    &lt;span class=&quot;hljs-keyword&quot;&gt;if&lt;/span&gt; [ ! &lt;span class=&quot;hljs-_&quot;&gt;-f&lt;/span&gt; &lt;span class=&quot;hljs-variable&quot;&gt;$PIDFILE&lt;/span&gt; ]
+                    &lt;span class=&quot;hljs-keyword&quot;&gt;then&lt;/span&gt;
+                            &lt;span class=&quot;hljs-built_in&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;hljs-string&quot;&gt;&quot;&lt;span class=&quot;hljs-variable&quot;&gt;$PIDFILE&lt;/span&gt; exists, process is not running.&quot;&lt;/span&gt;
+                    &lt;span class=&quot;hljs-keyword&quot;&gt;else&lt;/span&gt;
+                            PID=$(cat &lt;span class=&quot;hljs-variable&quot;&gt;$PIDFILE&lt;/span&gt;)
+                            &lt;span class=&quot;hljs-built_in&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;hljs-string&quot;&gt;&quot;Stopping...&quot;&lt;/span&gt;
+                            &lt;span class=&quot;hljs-variable&quot;&gt;$REDIS_CLI&lt;/span&gt; -p &lt;span class=&quot;hljs-variable&quot;&gt;$REDISPORT&lt;/span&gt; SHUTDOWN
+                            &lt;span class=&quot;hljs-keyword&quot;&gt;while&lt;/span&gt; [ -x &lt;span class=&quot;hljs-variable&quot;&gt;$PIDFILE&lt;/span&gt; ]
+                            &lt;span class=&quot;hljs-keyword&quot;&gt;do&lt;/span&gt;
+                                    &lt;span class=&quot;hljs-built_in&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;hljs-string&quot;&gt;&quot;Waiting for Redis to shutdown...&quot;&lt;/span&gt;
+                                    sleep 1
+                            &lt;span class=&quot;hljs-keyword&quot;&gt;done&lt;/span&gt;
+                            &lt;span class=&quot;hljs-built_in&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;hljs-string&quot;&gt;&quot;Redis stopped&quot;&lt;/span&gt;
+                    &lt;span class=&quot;hljs-keyword&quot;&gt;fi&lt;/span&gt;
+                    ;;
+            restart|force-reload)
+                    &lt;span class=&quot;hljs-variable&quot;&gt;${0}&lt;/span&gt; stop
+                    &lt;span class=&quot;hljs-variable&quot;&gt;${0}&lt;/span&gt; start
+                    ;;
+            *)
+                    &lt;span class=&quot;hljs-built_in&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;hljs-string&quot;&gt;&quot;Usage: /etc/init.d/redis {start|stop|restart|force-reload}&quot;&lt;/span&gt; &amp;gt;&amp;amp;2
+                    &lt;span class=&quot;hljs-built_in&quot;&gt;exit&lt;/span&gt; 1
+    &lt;span class=&quot;hljs-keyword&quot;&gt;esac&lt;/span&gt;</code></pre><br><br><em>   执行权限：<br>    <pre class="brush:shell; toolbar: true; auto-links: false;"><code>&lt;span class=&quot;hljs-attribute&quot;&gt;chmod&lt;/span&gt; +x /etc/init.d/redis</code></pre>
 
-@Override
-protected void deliverResponse(String response) {
-    mListener.onSuccess(response);
-}
+</em>   开机自启动：<br>    <pre class="brush:shell; toolbar: true; auto-links: false;">`<span class="hljs-comment"># 尝试启动或停止redis</span><br>    <span class="hljs-attribute">service</span> redis start<br>    service redis stop<br><br>    <span class="hljs-comment"># 开启服务自启动</span><br>    chkconfig redis <span class="hljs-literal">on</span><br><br></pre></div><br></div>
+      
 
-@Override
-public void deliverError(VolleyError error) {
-    mListener.onError(error);
-}
-</code></pre><p>}<br>附上demo连接：<a href="http://download.csdn.net/detail/s569646547/9098291" target="_blank" rel="noopener">http://download.csdn.net/detail/s569646547/9098291</a></p>
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/未分类//" class="article-tag-list-link color4">未分类</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2016/07/22/centos-e5-bc-80-e6-9c-ba-e8-87-aa-e5-90-af-e5-8a-a8redis/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-centos7-e5-ae-89-e8-a3-85-e9-85-8d-e7-bd-aeredis-3-0-0" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2016/07/22/centos7-e5-ae-89-e8-a3-85-e9-85-8d-e7-bd-aeredis-3-0-0/">CentOS7安装配置redis-3.0.0</a>
+    </h1>
+  
+
+        
+        <a href="/2016/07/22/centos7-e5-ae-89-e8-a3-85-e9-85-8d-e7-bd-aeredis-3-0-0/" class="archive-article-date">
+  	<time datetime="2016-07-22T09:11:44.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-07-22</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p><a name="top"></a></p>
+<div id="main"><br><div id="header"><br><br># <a href="http://www.cnblogs.com/kreo/" target="_blank" rel="noopener">清园</a><br><br>沉没的Atlantis<br><br></div><br><div id="post_detail"><br><div class="post"><br><br>## <a href="http://www.cnblogs.com/kreo/p/4399612.html" target="_blank" rel="noopener">CentOS7安装配置redis-3.0.0</a><br><br><div class="postText"><br><div id="cnblogs_post_body"><br><br><strong>一.安装必要包</strong><br><div class="cnblogs_code"><br><pre>yum install gcc</pre><br></div><br><strong>二.linux下安装</strong><br><div class="cnblogs_code"><br><div class="cnblogs_code_toolbar"><span class="cnblogs_code_copy"><a title="复制代码"><img src="http://common.cnblogs.com/images/copycode.gif" alt="复制代码"></a></span></div><br><pre>#下载<br>wget <a href="http://download.redis.io/releases/redis-3.0.0.tar.gz" target="_blank" rel="noopener">http://download.redis.io/releases/redis-3.0.0.tar.gz</a><br>tar zxvf redis-3.0.0.tar.gz<br>cd redis-3.0.0<br>#如果不加参数,linux下会报错<br>make MALLOC=libc</pre><br><div class="cnblogs_code_toolbar"><span class="cnblogs_code_copy"><a title="复制代码"><img src="http://common.cnblogs.com/images/copycode.gif" alt="复制代码"></a></span></div><br></div><br><strong> 安装好之后,启动文件</strong><br><div class="cnblogs_code"><br><pre>#启动redis<br>src/redis-server &amp;<br><br>#关闭redis<br>src/redis-cli shutdown</pre><br></div><br><strong>测试redis</strong><br><div class="cnblogs_code"><br><div class="cnblogs_code_toolbar"><span class="cnblogs_code_copy"><a title="复制代码"><img src="http://common.cnblogs.com/images/copycode.gif" alt="复制代码"></a></span></div><br><pre>$ src/redis-cli<br>127.0.0.1:6379&gt; set foo bar<br>OK<br>127.0.0.1:6379&gt; get foo<br>“bar”<br>$</pre><br><div class="cnblogs_code_toolbar"><span class="cnblogs_code_copy"><a title="复制代码"><img src="http://common.cnblogs.com/images/copycode.gif" alt="复制代码"></a></span></div><br></div><br>测试成功<br><br>&nbsp;<br><br><strong>3.redis cluster集群搭建</strong><br><br><strong>建立本机测试环境</strong><br><br>建立运行目录<br><div class="cnblogs_code"><br><div class="cnblogs_code_toolbar"><span class="cnblogs_code_copy"><a title="复制代码"><img src="http://common.cnblogs.com/images/copycode.gif" alt="复制代码"></a></span></div><br><pre>#建立redis运行目录<br>mkdir -p redis-server/7000/<br>#复制默认的配置文档<br>cp redis-3.0.0/redis.conf redis-server/redis.default.conf<br>#把编译好的server复制到运行目录<br>cp redis-3.0.0/src/redis-server redis-server/7000/</pre><br><div class="cnblogs_code_toolbar"><span class="cnblogs_code_copy"><a title="复制代码"><img src="http://common.cnblogs.com/images/copycode.gif" alt="复制代码"></a></span></div><br></div><br>建立独立配置文件<br><div class="cnblogs_code"><br><pre>#在7000目录下建立redis的配置文档<br>vim redis-server/7000/redis.conf</pre><br></div><br>文件内容<br><div class="cnblogs_code"><br><pre>#redis-server/7000/redis.conf<br>include /root/redis-server/redis.default.conf<br>pidfile /var/run/redis-7000.pid<br>port 7000<br>cluster-enabled yes<br>cluster-config-file redis-node-7000.conf<br>cluster-node-timeout 5000<br>appendonly yes</pre><br></div><br>复制运行目录(模拟集群环境)<br><div class="cnblogs_code"><br><pre>#复制目录<br>cp -R 7000/ 7001/<br>cp -R 7000/ 7002/<br>cp -R 7000/ 7003/<br>cp -R 7000/ 7004/<br>cp -R 7000/ 7005/</pre><br></div><br>修改相应配置文件的端口和文件名<br><br>建立启动脚本 redis-server/redis-start.sh<br><div class="cnblogs_code"><br><pre>#!/bin/sh<br>/root/redis-server/7000/redis-server /root/redis-server/7000/redis.conf &amp;<br>/root/redis-server/7001/redis-server /root/redis-server/7001/redis.conf &amp;<br>/root/redis-server/7002/redis-server /root/redis-server/7002/redis.conf &amp;<br>/root/redis-server/7003/redis-server /root/redis-server/7003/redis.conf &amp;<br>/root/redis-server/7004/redis-server /root/redis-server/7004/redis.conf &amp;<br>/root/redis-server/7005/redis-server /root/redis-server/7005/redis.conf &amp;</pre><br></div><br><strong>配置集群</strong><br><br>安装ruby<br><div class="cnblogs_code"><br><pre>yum install ruby-devel.x86_64</pre><br></div><br>安装redis gem<br><div class="cnblogs_code"><br><pre># gem install redis<br>Fetching: redis-3.2.1.gem (100%)<br>Successfully installed redis-3.2.1<br>Parsing documentation for redis-3.2.1<br>Installing ri documentation for redis-3.2.1<br>1 gem installed</pre><br></div><br>使用脚本建立集群机制<br><br><em>在create的时候,加上参数–replicas 1 表示为每个master分配一个salve,如例子,则是3个master 3个salve</em><br><div class="cnblogs_code"><br><pre># ./redis-trib.rb create 127.0.0.1:7000 127.0.0.1:7001 127.0.0.1:7002 127.0.0.1:7003 127.0.0.1:7004 127.0.0.1:7005<br>&gt;&gt;&gt; Creating cluster<br>Connecting to node 127.0.0.1:7000: OK<br>Connecting to node 127.0.0.1:7001: OK<br>Connecting to node 127.0.0.1:7002: OK<br>Connecting to node 127.0.0.1:7003: OK<br>Connecting to node 127.0.0.1:7004: OK<br>Connecting to node 127.0.0.1:7005: OK<br>&gt;&gt;&gt; Performing hash slots allocation on 6 nodes…<br>Using 6 masters:<br>127.0.0.1:7000<br>127.0.0.1:7001<br>127.0.0.1:7002<br>127.0.0.1:7003<br>127.0.0.1:7004<br>127.0.0.1:7005<br>M: f3dd250e4bc145c8b9f864e82f65e00d1ba627be 127.0.0.1:7000<br>   slots:0-2730 (2731 slots) master<br>M: 1ba602ade59e0770a15128b193f2ac29c251ab5e 127.0.0.1:7001<br>   slots:2731-5460 (2730 slots) master<br>M: 4f840a70520563c8ef0d7d1cc9d5eaff6a1547a2 127.0.0.1:7002<br>   slots:5461-8191 (2731 slots) master<br>M: 702adc7ae9caf1f6702987604548c6fc1d22e813 127.0.0.1:7003<br>   slots:8192-10922 (2731 slots) master<br>M: 4f87a11d2ea6ebe9caf02c9dbd827a3dba8a53cf 127.0.0.1:7004<br>   slots:10923-13652 (2730 slots) master<br>M: 216bbb7da50bd130da16a327c76dc6d285f731b3 127.0.0.1:7005<br>   slots:13653-16383 (2731 slots) master<br>Can I set the above configuration? (type ‘yes’ to accept): yes<br>&gt;&gt;&gt; Nodes configuration updated<br>&gt;&gt;&gt; Assign a different config epoch to each node<br>&gt;&gt;&gt; Sending CLUSTER MEET messages to join the cluster<br>Waiting for the cluster to join…<br>&gt;&gt;&gt; Performing Cluster Check (using node 127.0.0.1:7000)<br>M: f3dd250e4bc145c8b9f864e82f65e00d1ba627be 127.0.0.1:7000<br>   slots:0-2730 (2731 slots) master<br>M: 1ba602ade59e0770a15128b193f2ac29c251ab5e 127.0.0.1:7001<br>   slots:2731-5460 (2730 slots) master<br>M: 4f840a70520563c8ef0d7d1cc9d5eaff6a1547a2 127.0.0.1:7002<br>   slots:5461-8191 (2731 slots) master<br>M: 702adc7ae9caf1f6702987604548c6fc1d22e813 127.0.0.1:7003<br>   slots:8192-10922 (2731 slots) master<br>M: 4f87a11d2ea6ebe9caf02c9dbd827a3dba8a53cf 127.0.0.1:7004<br>   slots:10923-13652 (2730 slots) master<br>M: 216bbb7da50bd130da16a327c76dc6d285f731b3 127.0.0.1:7005<br>   slots:13653-16383 (2731 slots) master<br>[OK] All nodes agree about slots configuration.<br>&gt;&gt;&gt; Check for open slots…<br>&gt;&gt;&gt; Check slots coverage…<br>[OK] All 16384 slots covered.</pre><br></div><br>如果需要全部重新自动配置,则删除所有的配置好的cluster-config-file,重新启动所有的redis-server,然后重新执行配置命令即可<br><br></div><br></div><br></div><br></div><br></div>
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/未分类//" class="article-tag-list-link color4">未分类</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2016/07/22/centos7-e5-ae-89-e8-a3-85-e9-85-8d-e7-bd-aeredis-3-0-0/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-rename" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2016/07/22/rename/">rename</a>
+    </h1>
+  
+
+        
+        <a href="/2016/07/22/rename/" class="archive-article-date">
+  	<time datetime="2016-07-22T09:10:07.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-07-22</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>Dos/Windows下，对文件改名用rename。而书上说，Linux下对文件或目录改名该用mv。我一直也是这样做的，却忽略了Linux下也有 个叫rename的命令。都是rename，但功能上就有点差异了。Linux下的rename更像批量改名的工具，是util-linux套件中提供 的。</p>
+<p><strong>一、基本功能</strong><br>从mv和rename命令的man文档中，可以看到如下信息：</p>
+<div class="quote"><br><div class="quote-title">引用</div><br><div class="quote-content">mv - move (rename) files<br>rename - Rename files</div><br></div><br>也就是说，mv也能用于改名，但不能实现批量处理（改名时，不支持<em>等符号的），而rename可以。<br>rename使用的格式：<br><div class="code">$ rename foo foo0 foo?</div><br>rename需要提供三个参数，然后才能决定最终结果。<br>模拟一下man文档的例子，原文件：<br><div class="quote"><br><div class="quote-title">引用</div><br><div class="quote-content">$ for i in <code>seq 100</code>;do touch foo$i;done<br>$ ls<br>foo1    foo18  foo27  foo36  foo45  foo54  foo63  foo72  foo81  foo90<br>foo10   foo19  foo28  foo37  foo46  foo55  foo64  foo73  foo82  foo91<br>foo100  foo2   foo29  foo38  foo47  foo56  foo65  foo74  foo83  foo92<br>foo11   foo20  foo3   foo39  foo48  foo57  foo66  foo75  foo84  foo93<br>foo12   foo21  foo30  foo4   foo49  foo58  foo67  foo76  foo85  foo94<br>foo13   foo22  foo31  foo40  foo5   foo59  foo68  foo77  foo86  foo95<br>foo14   foo23  foo32  foo41  foo50  foo6   foo69  foo78  foo87  foo96<br>foo15   foo24  foo33  foo42  foo51  foo60  foo7   foo79  foo88  foo97<br>foo16   foo25  foo34  foo43  foo52  foo61  foo70  foo8   foo89  foo98<br>foo17   foo26  foo35  foo44  foo53  foo62  foo71  foo80  foo9   foo99</div><br></div><br>改名结果：<br>（红色是没有改动的，蓝色是有改动的一部分）<br><div class="quote"><br><div class="quote-title">引用</div><br><div class="quote-content">$ rename foo foo0 foo?<br>$ ls<br>foo01foo100foo20  foo30  foo40  foo50  foo60  foo70  foo80  foo90<br>foo02  foo11   foo21  foo31  foo41  foo51  foo61  foo71  foo81  foo91<br>foo03  foo12   foo22  foo32  foo42  foo52  foo62  foo72  foo82  foo92<br>foo04  foo13   foo23  foo33  foo43  foo53  foo63  foo73  foo83  foo93<br>foo05  foo14   foo24  foo34  foo44  foo54  foo64  foo74  foo84  foo94<br>foo06  foo15   foo25  foo35  foo45  foo55  foo65  foo75  foo85  foo95<br>foo07  foo16   foo26  foo36  foo46  foo56  foo66  foo76  foo86  foo96<br>foo08  foo17   foo27  foo37  foo47  foo57  foo67  foo77  foo87  foo97<br>foo09  foo18   foo28  foo38  foo48  foo58  foo68  foo78  foo88  foo98<br>foo10  foo19   foo29  foo39  foo49  foo59  foo69  foo79  foo89  foo99<br>$ rename foo foo0 foo??<br>$ ls<br>foo001  foo011  foo021  foo031  foo041  foo051  foo061  foo071  foo081  foo091<br>foo002  foo012  foo022  foo032  foo042  foo052  foo062  foo072  foo082  foo092<br>foo003  foo013  foo023  foo033  foo043  foo053  foo063  foo073  foo083  foo093<br>foo004  foo014  foo024  foo034  foo044  foo054  foo064  foo074  foo084  foo094<br>foo005  foo015  foo025  foo035  foo045  foo055  foo065  foo075  foo085  foo095<br>foo006  foo016  foo026  foo036  foo046  foo056  foo066  foo076  foo086  foo096<br>foo007  foo017  foo027  foo037  foo047  foo057  foo067  foo077  foo087  foo097<br>foo008  foo018  foo028  foo038  foo048  foo058  foo068  foo078  foo088  foo098<br>foo009  foo019  foo029  foo039  foo049  foo059  foo069  foo079  foo089  foo099<br>foo010  foo020  foo030  foo040  foo050  foo060  foo070  foo080  foo090  foo100</div><br></div><br>该例子给出了两种文件批量重命名的用法：<br><div class="quote"><br><div class="quote-title">引用</div><br><div class="quote-content">第一个参数：被替换掉的字符串<br>第二个参数：替换成的字符串<br>第三个参数：匹配要替换的文件模式</div><br></div><br>rename支持通配符，基本的通配符有以下几个：<br><div class="quote"><br><div class="quote-title">引用</div><br><div class="quote-content">?    可替代单个字符
+</div></div></em>    可替代多个字符<br>[charset]    可替代charset集中的任意单个字符<br><br><strong>二、其他例子</strong><br>看看<em>的作用：<br><div class="quote"><br><div class="quote-title">引用</div><br><div class="quote-content">$ rm -f </div></div></em><br>$ for i in <code>seq 100</code>;do touch foo$i;done<br>$ rename foo foo0 foo<em><br>$ ls<br>foo01    foo018  foo027  foo036  foo045  foo054  foo063  foo072  foo081  foo090<br>foo010   foo019  foo028  foo037  foo046  foo055  foo064  foo073  foo082  foo091<br>foo0100  foo02   foo029  foo038  foo047  foo056  foo065  foo074  foo083  foo092<br>foo011   foo020  foo03   foo039  foo048  foo057  foo066  foo075  foo084  foo093<br>foo012   foo021  foo030  foo04   foo049  foo058  foo067  foo076  foo085  foo094<br>foo013   foo022  foo031  foo040  foo05   foo059  foo068  foo077  foo086  foo095<br>foo014   foo023  foo032  foo041  foo050  foo06   foo069  foo078  foo087  foo096<br>foo015   foo024  foo033  foo042  foo051  foo060  foo07   foo079  foo088  foo097<br>foo016   foo025  foo034  foo043  foo052  foo061  foo070  foo08   foo089  foo098<br>foo017   foo026  foo035  foo044  foo053  foo062  foo071  foo080  foo09   foo099<br><br>再看看[charset]的作用：<br><div class="quote"><br><div class="quote-title">引用</div><br><div class="quote-content">$ rm -f </div></div></em><br>$ for i in <code>seq 100</code>;do touch foo$i;done<br>$ rename foo foo0 foo[9]*<br>$ ls<br>foo09   foo099  foo17  foo26  foo35  foo44  foo53  foo62  foo71  foo80<br>foo090  foo1    foo18  foo27  foo36  foo45  foo54  foo63  foo72  foo81<br>foo091  foo10   foo19  foo28  foo37  foo46  foo55  foo64  foo73  foo82<br>foo092  foo100  foo2   foo29  foo38  foo47  foo56  foo65  foo74  foo83<br>foo093  foo11   foo20  foo3   foo39  foo48  foo57  foo66  foo75  foo84<br>foo094  foo12   foo21  foo30  foo4   foo49  foo58  foo67  foo76  foo85<br>foo095  foo13   foo22  foo31  foo40  foo5   foo59  foo68  foo77  foo86<br>foo096  foo14   foo23  foo32  foo41  foo50  foo6   foo69  foo78  foo87<br>foo097  foo15   foo24  foo33  foo42  foo51  foo60  foo7   foo79  foo88<br>foo098  foo16   foo25  foo34  foo43  foo52  foo61  foo70  foo8   foo89<br>
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/未分类//" class="article-tag-list-link color4">未分类</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2016/07/22/rename/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-hello-world" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2016/07/22/hello-world/">世界，您好！</a>
+    </h1>
+  
+
+        
+        <a href="/2016/07/22/hello-world/" class="archive-article-date">
+  	<time datetime="2016-07-21T16:56:46.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-07-22</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>欢迎使用WordPress。这是您的第一篇文章。编辑或删除它，然后开始写作吧！</p>
 
       
 
@@ -2295,7 +867,7 @@ public void deliverError(VolleyError error) {
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/2016/09/13/volley-e6-89-a9-e5-b1-95-e6-96-87-e4-bb-b6-e4-b8-8a-e4-bc-a0-ef-bc-88-e6-94-af-e6-8c-81-e8-bf-9b-e5-ba-a6-e6-9d-a1-ef-bc-89-1/">展开全文 >></a>
+          <a class="article-more-a" href="/2016/07/22/hello-world/">展开全文 >></a>
         </p>
       
 
@@ -2327,7 +899,7 @@ public void deliverError(VolleyError error) {
   
   
     <nav id="page-nav">
-      <a class="extend prev" rel="prev" href="/page/2/">&laquo; Prev</a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><a class="page-number" href="/page/5/">5</a><a class="page-number" href="/page/6/">6</a><a class="extend next" rel="next" href="/page/4/">Next &raquo;</a>
+      <a class="extend prev" rel="prev" href="/page/2/">&laquo; Prev</a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span>
     </nav>
   
 
