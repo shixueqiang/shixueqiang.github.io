@@ -151,6 +151,123 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-2015-vlc-e7-bc-96-e8-af-91" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2016/09/13/2015-vlc-e7-bc-96-e8-af-91/">2015——VLC编译</a>
+    </h1>
+  
+
+        
+        <a href="/2016/09/13/2015-vlc-e7-bc-96-e8-af-91/" class="archive-article-date">
+  	<time datetime="2016-09-13T06:48:48.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-09-13</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>一、工具准备</p>
+<blockquote>
+<p>需要的工具最好都用最新版的。官方文档：<a href="https://wiki.videolan.org/AndroidCompile" target="_blank" rel="noopener">https://wiki.videolan.org/AndroidCompile</a></p>
+<p>1、编译系统：Ubuntu 32位，我这里用的是ubuntukylin-14.04.2-desktop-i386，安装在vmware虚拟机上，这里注意必须用32位linux系统，我最开始用的64位始终编译不成功。</p>
+<p>2、sdk：官网下载最新的sdk，我这里用的是android-sdk-r24.3.3-linux.tar,解压后下载最新的build-tools，sdk5.0以上的（vlc使用了5.0以上才有的一些样式功能），以及最新的support library。</p>
+<p>3、ndk：我这里用的是android-ndk-r10e-linux-86.bin。</p>
+<p>4、jdk：我这里用的是jdk-8u51-linux-i586。<br>二、环境准备<br>1、安装必备的组件</p>
+<pre>sudo apt-get install automake ant autopoint cmake build-essential libtool \
+
+     patch pkg-config protobuf-compiler ragel subversion unzip git</pre>
+
+<p>2、设置环境变量jdk：</p>
+<pre class="html">    export JAVA_HOME=/home/shixq/tools/jdk1.8.0_51  
+
+    export JRE_HOME=${JAVA_HOME}/jre  
+
+    export CLASSPATH=.:${JAVA_HOME}/lib:${JRE_HOME}/lib  
+
+    export PATH=${JAVA_HOME}/bin:$PATH</pre>
+
+<p>sdk，ndk：</p>
+<pre class="html">    export ANDROID_SDK=/home/shixq/tools/android-sdk-linux
+
+    export ANDROID_NDK=/home/shixq/tools/android-ndk-r10e
+
+    export PATH=$PATH:$ANDROID_SDK/platform-tools:$ANDROID_SDK/tools
+
+    export ANDROID_ABI=armeabi-v7a</pre>
+
+<p>ANDROID_ABI要根据所使用的android平台决定，可以是x86，mips，不写的话默认是armeabi-v7a。<br>三、获取配置代码</p>
+<p><pre>git clone <a href="http://write.blog.csdn.net/postedit/47951189" target="_blank" rel="noopener">git://git.videolan.org/vlc-ports/android.git</a></pre></p>
+<p>会在当前目录生成一个android目录。</p>
+<p><br>四、开始编译<br>进入到android目录，执 行./compile.sh,脚本会自动下载vlc源码及编译所需的插件，网络良好的情况下下载还是比较快的，中间遇到的大部分问题都是因为被墙的原因导 致下载失败，如果你有vpn的话会顺利很多，否则的话只能手动去网上下了，总之就是哪个下失败，就手动下载下来放到对应目录下，然后接 着./compile.sh。这个过程可能重复很多次，要有耐心。中间还遇到个gettext版本问题，系统自带版本是0.18.3（使用 gettext –version查看版本）,编译配置文件所需版本要大于0.18.3，本来想手动升级下，从网上下载了0.19.3安装后没想到还是0.18.3，后 来根据这篇文章解决：<a href="http://stackoverflow.com/questions/30259182/build-vlc-for-" target="_blank" rel="noopener">http://stackoverflow.com/questions/30259182/build-vlc-for-</a> android-project-failed-on-ubuntu-12-04。</p>
+<pre><code>&lt;span class=&quot;pun&quot;&gt;./&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;vlc&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;configure&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;ac&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;lit&quot;&gt;439&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;AM_GNU_GETTEXT_VERSION&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;([&lt;/span&gt;&lt;span class=&quot;lit&quot;&gt;0.19&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;lit&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;])&lt;/span&gt;
+
+&lt;span class=&quot;pun&quot;&gt;./&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;vlc&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;contrib&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;contrib&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;android&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;arm&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;linux&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;androideabi&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;gnutls&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;configure&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;ac&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;lit&quot;&gt;148&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;AM_GNU_GETTEXT_VERSION&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;([&lt;/span&gt;&lt;span class=&quot;lit&quot;&gt;0.18&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;])&lt;/span&gt;
+
+&lt;span class=&quot;pun&quot;&gt;./&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;vlc&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;contrib&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;contrib&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;android&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;arm&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;linux&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;androideabi&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;libgpg&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;error&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;configure&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;ac&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;lit&quot;&gt;158&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;pln&quot;&gt;AM_GNU_GETTEXT_VERSION&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;([&lt;/span&gt;&lt;span class=&quot;lit&quot;&gt;0.19&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;lit&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;pun&quot;&gt;])&lt;/span&gt;
+</code></pre><p>就是手动将配置文件改成0.18.3。编译成功截图：</p>
+<p><img src="http://img.blog.csdn.net/20150826115845692" alt=""><br>五、运行程序<br>编译完后的apk文件在android/vlc-android/build/outputs下，程序运行需要的文件</p>
+<p><img src="http://write.blog.csdn.net/postedit/47951189" alt=""></p>
+<h4 id="libvlc-和vlc-android是主要的源代码，因为是用gradle构建的所以用eclipse的话，就比较悲催了，需要手动引入support下的-design和v7下的appcompat和cardview，还有个互相引用的问题，哎，所以还是用androd-studio或者idea来运行程序吧。"><a href="#libvlc-和vlc-android是主要的源代码，因为是用gradle构建的所以用eclipse的话，就比较悲催了，需要手动引入support下的-design和v7下的appcompat和cardview，还有个互相引用的问题，哎，所以还是用androd-studio或者idea来运行程序吧。" class="headerlink" title="libvlc 和vlc-android是主要的源代码，因为是用gradle构建的所以用eclipse的话，就比较悲催了，需要手动引入support下的 design和v7下的appcompat和cardview，还有个互相引用的问题，哎，所以还是用androd studio或者idea来运行程序吧。"></a><span id="Example_on_Ubuntu" class="mw-headline">libvlc 和vlc-android是主要的源代码，因为是用gradle构建的所以用eclipse的话，就比较悲催了，需要手动引入support下的 design和v7下的appcompat和cardview，还有个互相引用的问题，哎，所以还是用androd studio或者idea来运行程序吧。</span></h4><p></p>
+<p>附上资源连接：<a href="http://download.csdn.net/detail/s569646547/9049283" target="_blank" rel="noopener">http://download.csdn.net/detail/s569646547/9049283</a></p>
+</blockquote>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/未分类//" class="article-tag-list-link color4">未分类</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2016/09/13/2015-vlc-e7-bc-96-e8-af-91/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-android-e7-9a-84-e6-b6-88-e6-81-af-e5-be-aa-e7-8e-af-e7-ba-bf-e7-a8-8b-e9-97-b4-e9-80-9a-e4-bf-a1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
