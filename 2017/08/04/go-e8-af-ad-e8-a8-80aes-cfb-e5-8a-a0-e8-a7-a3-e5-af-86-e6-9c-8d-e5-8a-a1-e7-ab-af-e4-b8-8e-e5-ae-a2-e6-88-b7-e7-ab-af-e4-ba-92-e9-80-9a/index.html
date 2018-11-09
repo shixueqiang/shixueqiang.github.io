@@ -8,17 +8,17 @@
   <link rel="dns-prefetch" href="http://www.shixq.com">
   <title>go语言AES CFB加解密服务端与客户端互通 | shixq</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="package utils import (    “bytes”    “crypto/aes”    “crypto/cipher”    “encoding/base64”    “fmt”    “log”) var commonIV = []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0">
+  <meta name="description" content="package utils&amp;nbsp;import (    “bytes”    “crypto/aes”    “crypto/cipher”    “encoding/base64”    “fmt”    “log”)&amp;nbsp;var commonIV = []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,">
 <meta property="og:type" content="article">
 <meta property="og:title" content="go语言AES CFB加解密服务端与客户端互通">
 <meta property="og:url" content="http://www.shixq.com/2017/08/04/go-e8-af-ad-e8-a8-80aes-cfb-e5-8a-a0-e8-a7-a3-e5-af-86-e6-9c-8d-e5-8a-a1-e7-ab-af-e4-b8-8e-e5-ae-a2-e6-88-b7-e7-ab-af-e4-ba-92-e9-80-9a/index.html">
 <meta property="og:site_name" content="shixq">
-<meta property="og:description" content="package utils import (    “bytes”    “crypto/aes”    “crypto/cipher”    “encoding/base64”    “fmt”    “log”) var commonIV = []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0">
+<meta property="og:description" content="package utils&amp;nbsp;import (    “bytes”    “crypto/aes”    “crypto/cipher”    “encoding/base64”    “fmt”    “log”)&amp;nbsp;var commonIV = []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,">
 <meta property="og:locale" content="default">
-<meta property="og:updated_time" content="2018-05-21T06:01:06.558Z">
+<meta property="og:updated_time" content="2018-05-28T02:31:32.233Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="go语言AES CFB加解密服务端与客户端互通">
-<meta name="twitter:description" content="package utils import (    “bytes”    “crypto/aes”    “crypto/cipher”    “encoding/base64”    “fmt”    “log”) var commonIV = []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0">
+<meta name="twitter:description" content="package utils&amp;nbsp;import (    “bytes”    “crypto/aes”    “crypto/cipher”    “encoding/base64”    “fmt”    “log”)&amp;nbsp;var commonIV = []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,">
   
     <link rel="alternative" href="/atom.xml" title="shixq" type="application/atom+xml">
   
@@ -170,20 +170,7 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p><pre class="html">package utils</pre></p>
-<p>import (<br>    “bytes”<br>    “crypto/aes”<br>    “crypto/cipher”<br>    “encoding/base64”<br>    “fmt”<br>    “log”<br>)</p>
-<p>var commonIV = []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f}</p>
-<p>var key = “32位key”</p>
-<p>func AesEncrypt(content string) string {<br>    // 创建加密算法aes<br>    c, err := aes.NewCipher([]byte(key))<br>    if err != nil {<br>        log.Fatalln(“Error: NewCipher(%d bytes) = %s”, len(key), err)<br>    }</p>
-<pre><code>//加密字符串
-cfb := cipher.NewCFBEncrypter(c, commonIV)
-ciphertext := make([]byte, len(content))
-cfb.XORKeyStream(ciphertext, []byte(content))
-fmt.Printf(&quot;%s=&amp;gt;%x\n&quot;, content, ciphertext)
-ciphertext = Base64Encode(ciphertext)
-return string(ciphertext)
-</code></pre><p>}</p>
-<p>func AesDecrypt(content string) string {<br>    text := make([]byte, len(content))<br>    var err error<br>    text, err = Base64Decode([]byte(content))<br>    if err != nil {<br>        log.Fatalln(err)<br>    }<br>    // 创建加密算法aes<br>    c, err := aes.NewCipher([]byte(key))<br>    if err != nil {<br>        log.Fatalln(“Error: NewCipher(%d bytes) = %s”, len(key), err)<br>    }<br>    // 解密字符串<br>    decryptText := make([]byte, len(text))<br>    cfbdec := cipher.NewCFBDecrypter(c, commonIV)<br>    cfbdec.XORKeyStream(decryptText, []byte(text))<br>    fmt.Printf(“%x=&gt;%s\n”, text, decryptText)<br>    return string(decryptText)<br>}<br>&nbsp;</p>
+        <p><pre class="html">package utils<br>&nbsp;<br>import (<br>    “bytes”<br>    “crypto/aes”<br>    “crypto/cipher”<br>    “encoding/base64”<br>    “fmt”<br>    “log”<br>)<br>&nbsp;<br>var commonIV = []byte{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f}<br>&nbsp;<br>var key = “32位key”<br>&nbsp;<br>func AesEncrypt(content string) string {<br>    // 创建加密算法aes<br>    c, err := aes.NewCipher([]byte(key))<br>    if err != nil {<br>        log.Fatalln(“Error: NewCipher(%d bytes) = %s”, len(key), err)<br>    }<br>&nbsp;<br>    //加密字符串<br>    cfb := cipher.NewCFBEncrypter(c, commonIV)<br>    ciphertext := make([]byte, len(content))<br>    cfb.XORKeyStream(ciphertext, []byte(content))<br>    fmt.Printf(“%s=&gt;%x\n”, content, ciphertext)<br>    ciphertext = Base64Encode(ciphertext)<br>    return string(ciphertext)<br>}<br>&nbsp;<br>func AesDecrypt(content string) string {<br>    text := make([]byte, len(content))<br>    var err error<br>    text, err = Base64Decode([]byte(content))<br>    if err != nil {<br>        log.Fatalln(err)<br>    }<br>    // 创建加密算法aes<br>    c, err := aes.NewCipher([]byte(key))<br>    if err != nil {<br>        log.Fatalln(“Error: NewCipher(%d bytes) = %s”, len(key), err)<br>    }<br>    // 解密字符串<br>    decryptText := make([]byte, len(text))<br>    cfbdec := cipher.NewCFBDecrypter(c, commonIV)<br>    cfbdec.XORKeyStream(decryptText, []byte(text))<br>    fmt.Printf(“%x=&gt;%s\n”, text, decryptText)<br>    return string(decryptText)<br>}</pre><br>&nbsp;</p>
 <p><div><span style="font-size: 18px;">客户端解密时不同语言容易出现问题，一种简单的处理办法就是对go代码交叉编译出android端和ios端的lib库，我们可以使用go mobile，<a href="https://github.com/golang/go/wiki/Mobile" target="_blank" rel="noopener">https://github.com/golang/go/wiki/Mobile</a></span></div></p>
 <p><div><span style="font-size: 18px;">获取：</span></div></p>
 <p><div><span style="font-size: 18px;">$ go get golang.org/x/mobile/cmd/gomobile</span></div></p>

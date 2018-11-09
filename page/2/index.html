@@ -151,6 +151,86 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-android-e5-b0-86so-e6-89-93-e5-88-b0jar-e5-8c-85-e4-b8-ad-e5-b9-b6-e8-bf-90-e8-a1-8c" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2016/09/13/android-e5-b0-86so-e6-89-93-e5-88-b0jar-e5-8c-85-e4-b8-ad-e5-b9-b6-e8-bf-90-e8-a1-8c/">android将so打到jar包中并运行</a>
+    </h1>
+  
+
+        
+        <a href="/2016/09/13/android-e5-b0-86so-e6-89-93-e5-88-b0jar-e5-8c-85-e4-b8-ad-e5-b9-b6-e8-bf-90-e8-a1-8c/" class="archive-article-date">
+  	<time datetime="2016-09-13T06:57:07.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-09-13</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>加载so有两种方法</p>
+<p>System.load() 和System.loadLibrary(); 前者需传入库文件的绝对路径，后者只需传入库文件名。</p>
+<p>首先我的jar包目录如下：</p>
+<p><img src="http://img.blog.csdn.net/20160704165107689?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQv/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center" alt=""></p>
+<p>Loader是加载类：</p>
+<p><pre class="html"> static {<br>        try {<br>            InputStream is = null;<br>            if(isCPUInfo64()) {<br>                is = Loader.class.getResource(“arm64/libhellojni.so”).openStream();<br>            }else {<br>                is = Loader.class.getResource(“arm32/libhellojni.so”).openStream();<br>            }<br>            File tempFile = File.createTempFile(“hellojni”, “.so”);<br>            FileOutputStream fos = new FileOutputStream(tempFile);<br>            int i;<br>            byte[] buf = new byte[1024];<br>            while ((i = is.read(buf)) != -1) {<br>                fos.write(buf, 0, i);<br>            }<br>            is.close();<br>            fos.close();<br>            System.load(tempFile.getAbsolutePath());<br>            tempFile.deleteOnExit();<br>        } catch (IOException e) {<br>            e.printStackTrace();<br>        }<br>    }</pre><br>&nbsp;</p>
+<p><pre class="html">private static boolean isCPUInfo64() {<br>        File cpuInfo = new File(“/proc/cpuinfo”);<br>        if (cpuInfo != null &amp;&amp; cpuInfo.exists()) {<br>            InputStream inputStream = null;<br>            BufferedReader bufferedReader = null;<br>            try {<br>                inputStream = new FileInputStream(cpuInfo);<br>                bufferedReader = new BufferedReader(new InputStreamReader(inputStream), 512);<br>                String line = bufferedReader.readLine();<br>                if (line != null &amp;&amp; line.length() &gt; 0 &amp;&amp; line.toLowerCase(Locale.US).contains(“arch64”)) {<br>                    return true;<br>                } else {<br>                    return false;<br>                }<br>            } catch (Throwable t) {<br>                Log.d(“isCPUInfo64”, “ error = “ + t.toString());<br>            } finally {<br>                try {<br>                    if (bufferedReader != null) {<br>                        bufferedReader.close();<br>                    }<br>                    if (inputStream != null) {<br>                        inputStream.close();<br>                    }<br>                } catch (Exception e) {<br>                    e.printStackTrace();<br>                }<br>            }<br>        }<br>        return false;<br>    }</pre><br>&nbsp;</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/未分类//" class="article-tag-list-link color4">未分类</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2016/09/13/android-e5-b0-86so-e6-89-93-e5-88-b0jar-e5-8c-85-e4-b8-ad-e5-b9-b6-e8-bf-90-e8-a1-8c/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-idea-failed-to-create-a-child-event-loop" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -253,51 +333,12 @@
 <p>2、用vs自带的命令行工具（编译32位的dll选x86，64位的选x64）<span id="Label3">进入到zlib根目录，执行 nmake -f win32/Makefile.msc ,在根目录下生成：zlib.lib(静态库)  zdll.lib(动态库的导入库)  zlib1.dll(动态库) 。必要的头文件有zlib.h和zconf.h</span>。</p>
 <p>二、quazip的编译</p>
 <p>1、quazip是zlib的封装库，下载源码后用QT打开，编译需要依赖zlib库，右键项目添加库选外部库就好。我添加后在.pro文件末尾会生成下面配置,注意编译64位的quazip，使用的zlib也必须是64位的</p>
-<p><pre class="html">win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../zlib64/ -lzdll</pre></p>
-<p>else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../zlib64/ -lzdll</p>
-<p>else:unix: LIBS += -L$$PWD/../zlib64/ -lzdll</p>
-<p>INCLUDEPATH += $$PWD/../zlib64</p>
-<p>DEPENDPATH += $$PWD/../zlib64<br>&nbsp;</p>
+<p><pre class="html">win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../zlib64/ -lzdll<br>&nbsp;<br>else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../zlib64/ -lzdll<br>&nbsp;<br>else:unix: LIBS += -L$$PWD/../zlib64/ -lzdll<br>&nbsp;<br>INCLUDEPATH += $$PWD/../zlib64<br>&nbsp;<br>DEPENDPATH += $$PWD/../zlib64</pre><br>&nbsp;</p>
 <p>INCLUDEPATH是头文件路径</p>
 <p>2、右键项目构建会生成quazip.lib和quazip.dll，注意zlib和quazip的默认字符集都是ANSI，在调用的文件的字符集也必须是ANSI，否则编译不过,使用utf-8的话，都必须是utf-8.</p>
 <p>三、使用</p>
 <p>1、使用时同样需要添加外部库zlib和quazip，字符集需要和dll一样，下面是一段解压缩代码</p>
-<p><pre class="html">bool extract(const QString&amp; in_file_path, const QString&amp; out_file_path)<br>{</pre></p>
-<pre><code>QuaZip archive(in_file_path);
-if (!archive.open(QuaZip::mdUnzip))
-    return false;
-
-QString path = out_file_path;
-if (!path.endsWith(&quot;/&quot;) &amp;amp;&amp;amp; !out_file_path.endsWith(&quot;\\&quot;))
-    path += &quot;/&quot;;
-
-QDir dir(out_file_path);
-if (!dir.exists())
-    dir.mkpath(out_file_path);
-
-for( bool f = archive.goToFirstFile(); f; f = archive.goToNextFile() )
-{
-    QString filePath = archive.getCurrentFileName();
-    QuaZipFile zFile(archive.getZipName(), filePath);
-    zFile.open(QIODevice::ReadOnly );
-    QByteArray ba = zFile.readAll();
-    zFile.close();
-
-    if (filePath.endsWith(&quot;/&quot;))
-    {
-        dir.mkpath(filePath);
-    }
-    else
-    {
-        QFile dstFile(path + filePath);
-        if (!dstFile.open(QIODevice::WriteOnly))
-            return false;
-        dstFile.write(ba);
-        dstFile.close();
-    }
-}
-return true;
-</code></pre><p>}<br>2、构建运行，新版QT运行需要拷贝qtvs2015下的plugins下的platforms文件夹到debug或release里边运行，还需要zlib1.dll和quazip.dll放到生成的exe同级目录下。运行没反应的话检查防火墙和杀毒。</p>
+<p><pre class="html">bool extract(const QString&amp; in_file_path, const QString&amp; out_file_path)<br>{<br>    &nbsp;<br>    QuaZip archive(in_file_path);<br>    if (!archive.open(QuaZip::mdUnzip))<br>        return false;<br>    &nbsp;<br>    QString path = out_file_path;<br>    if (!path.endsWith(“/“) &amp;&amp; !out_file_path.endsWith(“\“))<br>        path += “/“;<br>    &nbsp;<br>    QDir dir(out_file_path);<br>    if (!dir.exists())<br>        dir.mkpath(out_file_path);<br>    &nbsp;<br>    for( bool f = archive.goToFirstFile(); f; f = archive.goToNextFile() )<br>    {<br>        QString filePath = archive.getCurrentFileName();<br>        QuaZipFile zFile(archive.getZipName(), filePath);<br>        zFile.open(QIODevice::ReadOnly );<br>        QByteArray ba = zFile.readAll();<br>        zFile.close();<br>        &nbsp;<br>        if (filePath.endsWith(“/“))<br>        {<br>            dir.mkpath(filePath);<br>        }<br>        else<br>        {<br>            QFile dstFile(path + filePath);<br>            if (!dstFile.open(QIODevice::WriteOnly))<br>                return false;<br>            dstFile.write(ba);<br>            dstFile.close();<br>        }<br>    }<br>    return true;<br>}</pre><br>2、构建运行，新版QT运行需要拷贝qtvs2015下的plugins下的platforms文件夹到debug或release里边运行，还需要zlib1.dll和quazip.dll放到生成的exe同级目录下。运行没反应的话检查防火墙和杀毒。</p>
 
       
 
@@ -322,253 +363,6 @@ return true;
       
         <p class="article-more-link">
           <a class="article-more-a" href="/2016/09/13/qt-e8-a7-a3-e5-8e-8b-e7-bc-a9zlib-e5-92-8cquazip-e7-9a-84-e4-bd-bf-e7-94-a8/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-apprtcwebrtc-e6-9c-ac-e5-9c-b0-e6-90-ad-e5-bb-ba-e6-9c-8d-e5-8a-a1-e5-99-a8" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2016/09/13/apprtcwebrtc-e6-9c-ac-e5-9c-b0-e6-90-ad-e5-bb-ba-e6-9c-8d-e5-8a-a1-e5-99-a8/">apprtc(webrtc) 本地搭建服务器</a>
-    </h1>
-  
-
-        
-        <a href="/2016/09/13/apprtcwebrtc-e6-9c-ac-e5-9c-b0-e6-90-ad-e5-bb-ba-e6-9c-8d-e5-8a-a1-e5-99-a8/" class="archive-article-date">
-  	<time datetime="2016-09-13T06:53:44.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2016-09-13</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p><span style="font-size: large;">这两天测试了下webrtc的效果，不知道是不是手机比较渣，画面并不是很清晰，先来说说服务器的部署。部署环境ubuntu14.04 32位。<br></span></p>
-<p><span style="font-size: large;">一、服务器组成</span></p>
-<p><span style="font-size: large;">      1、AppRTC 房间服务器  <a href="https://github.com/webrtc/apprtc" target="_blank" rel="noopener">https://github.com/webrtc/apprtc</a></span></p>
-<p><span style="font-size: large;">      2、Collider  信令服务器  上边源码里自带</span></p>
-<p><span style="font-size: large;">      3、coTurn   穿透服务器   <a href="https://github.com/coturn/coturn" target="_blank" rel="noopener">https://github.com/coturn/coturn</a></span></p>
-<p><span style="font-size: large;">      4、需要自己实现coTurn连接信息接口，主要返回用户名、密码和turn配置信息，通常叫做TURN REST API,不实现这个接口的话AppRTCDemo连不上服务器，浏览器访问的话可以正常访问。</span></p>
-<p><span style="font-size: large;">二、AppRTC房间服务器</span></p>
-<p><span style="font-size: large;">      1、下载代码</span></p>
-<p><span style="font-size: large;">      2、安装依赖</span></p>
-<p><span style="font-size: large;">            sudo apt-get install nodejs</span></p>
-<p><span style="font-size: large;">            sudo npm install -g npm</span></p>
-<p><span style="font-size: large;">            sudo apt-get install nodejs-legacy</span></p>
-<p><span style="font-size: large;">            sudo npm -g install grunt-cli</span></p>
-<p><span style="font-size: large;">            切换到源码目录</span></p>
-<p><span style="font-size: large;">            cd apprtc-master</span></p>
-<p><span style="font-size: large;">            npm install</span></p>
-<p><span style="font-size: large;">            sudo apt-get install python-webtest</span></p>
-<p><span style="font-size: large;">            grunt build</span></p>
-<p><span style="font-size: large;">            编译之后会多出out目录</span></p>
-<p><span style="font-size: large;">            运行还依赖 Google App Engine SDK for  Python <a href="https://cloud.google.com/appengine/downloads#Google_App_Engine_SDK_for_Python" target="_blank" rel="noopener">需翻墙
-</a></span></p>
-<p><span style="font-size: large;">            下载完后设置环境变量<br></span></p>
-<p><span style="font-size: large;">            sudo gedit /etc/profile<br></span></p>
-<p><span style="font-size: large;">            export PATH=$PATH:/home/google_appengine</span></p>
-<p><span style="font-size: large;">            source /etc/profile<br></span></p>
-<p><span style="font-size: large;">        3、修改配置文件</span></p>
-<p><span style="font-size: large;">             主要是src/app_engine目录下的apprtc.py和constants.py</span></p>
-<p><span style="font-size: large;">             首先是<span style="font-size: large;">constants.py</span>：</span></p>
-<p><span style="font-size: large;">             修改TURN_BASE_URL = ‘<a href="http://192.168.214.129:80&#39;" target="_blank" rel="noopener">http://192.168.214.129:80&#39;</a>  这个是上边提到的连接信息接口的地址</span></p>
-<p><span style="font-size: large;">             TURN_URL_TEMPLATE = ‘%s/turn.php?username=%s&amp;key=%s’</span></p>
-<p><span style="font-size: large;">             CEOD_KEY = 和coturn turnserver.conf <span style="font-size: large;">static-auth-secret一致</span><br></span></p>
-<p><span style="font-size: large;">             WSS_INSTANCES = [{<br>WSS_INSTANCE_HOST_KEY: ‘192.168.214.129:8089’,<br>WSS_INSTANCE_NAME_KEY: ‘wsserver-std’,<br>WSS_INSTANCE_ZONE_KEY: ‘us-central1-a’<br>}, {<br>WSS_INSTANCE_HOST_KEY: ‘192.168.214.129:8089’,<br>WSS_INSTANCE_NAME_KEY: ‘wsserver-std-2’,<br>WSS_INSTANCE_ZONE_KEY: ‘us-central1-f’<br>}]</span></p>
-<p><span style="font-size: large;">             apprtc.py:</span></p>
-<p><span style="font-size: large;">             修改get_wss_parameters(request) 下的</span></p>
-<p><span style="font-size: large;">              if wss_tls and wss_tls == ‘false’:<br>wss_url = ‘ws://‘ + wss_host_port_pair + ‘/ws’<br>wss_post_url = ‘http://‘ + wss_host_port_pair<br>else:<br>wss_url = ‘ws://‘ + wss_host_port_pair + ‘/ws’<br>wss_post_url = ‘http://‘ + wss_host_port_pair</span></p>
-<p><span style="font-size: large;">              主要是把原来的wss和https的scheme都改为ws和http，不要让客户端和浏览器去使用ssl连接，如果有第三   方根证书的签名机构颁发的证书就不需要这样了。</span></p>
-<p><span style="font-size: large;">               修改完后重新grunt build下。</span></p>
-<p><span style="font-size: large;">           4、启动</span></p>
-<p><span style="font-size: large;">                dev_appserver.py –host=0.0.0.0 ./out/app_engine</span></p>
-<p><span style="font-size: large;">三、Collider信令服务器</span></p>
-<p><span style="font-size: large;">        1、安装依赖</span></p>
-<p><span style="font-size: large;">         sudo apt-get install golang-go</span></p>
-<p><span style="font-size: large;">         2、在home目下创建文件夹</span></p>
-<p><span style="font-size: large;">         mkdir -p ~/collider_root        并在collider_root目录下创建src目录</span></p>
-<p><span style="font-size: large;">         设置GOPATH环境变量    export GOPATH=~/collider_root</span></p>
-<p><span style="font-size: large;">         将apprtc/src/collider目录下的三个文件夹都拷贝到collider_root/src下</span></p>
-<p><span style="font-size: large;">         进入到collider_root/src,开始编译安装collider，准备好翻墙</span></p>
-<p><span style="font-size: large;">         go get collidermain</span></p>
-<p><span style="font-size: large;">         go install collidermain</span></p>
-<p><span style="font-size: large;">         成功编译后会在collider_root目录下生成bin和pkg目录，执行文件在bin下。</span></p>
-<p><span style="font-size: large;">        3、运行</span></p>
-<p><span style="font-size: large;">          修改collider_root/src/collidermain/main.go填上自己ip地址</span></p>
-<p><span style="font-size: large;">          var roomSrv = flag.String(“room-server”, “<a href="http://192.168.214.129:8080/&quot;" target="_blank" rel="noopener">http://192.168.214.129:8080/&quot;</a>, “The origin of the room server”)</span></p>
-<p><span style="font-size: large;">          启动</span></p>
-<p><span style="font-size: large;">          ~/collider_root/bin/collidermain -port=8089 -tls=false</span></p>
-<p><span style="font-size: large;">四、coTurn 打洞服务器</span></p>
-<p><span style="font-size: large;">        1、下载<a href="http://turnserver.open-sys.org/downloads/" target="_blank" rel="noopener">http://turnserver.open-sys.org/downloads/</a></span></p>
-<p><span style="font-size: large;">         找个适合自己linux系统的，我这里是ubuntu32位所以选了turnserver-4.2.1.2-debian-wheezy-ubuntu-mint-x86-32bits.tar.gz</span></p>
-<p><span style="font-size: large;">         下载完后解压进入解压目录</span></p>
-<p><span style="font-size: large;">          cat INSTALL     查看安装须知</span></p>
-<p><span style="font-size: large;">          sudo apt-get install gdebi-core</span></p>
-<p><span style="font-size: large;">          sudo gdebi coturn_4.2.2.2-1_i386.deb</span></p>
-<p><span style="font-size: large;">         2、编辑配置文件</span></p>
-<p><span style="font-size: large;">           sudo gedit /etc/turnserver.conf</span></p>
-<p><span style="font-size: large;">           listening-device=eth0</span></p>
-<p><span style="font-size: large;">           listening-port=3478<br></span></p>
-<p><span style="font-size: large;">           relay-device=eth1</span></p>
-<p><span style="font-size: large;">           min-port=49152<br>max-port=65535<br></span></p>
-<p><span style="font-size: large;">           Verbose</span></p>
-<p><span style="font-size: large;">           fingerprint</span></p>
-<p><span style="font-size: large;">           lt-cred-mech</span></p>
-<p><span style="font-size: large;">           use-auth-secret</span></p>
-<p><span style="font-size: large;">           static-auth-secret=填写自己的密钥可不修改<br></span></p>
-<p><span style="font-size: large;">           stale-nonce</span></p>
-<p><span style="font-size: large;">           cert=/usr/local/etc/turn_server_cert.pem</span></p>
-<p><span style="font-size: large;">           pkey=/usr/local/etc/turn_server_pkey.pem</span></p>
-<p><span style="font-size: large;">           no-loopback-peers</span></p>
-<p><span style="font-size: large;">           no-multicast-peers</span></p>
-<p><span style="font-size: large;">           mobility</span></p>
-<p><span style="font-size: large;">           no-cli</span></p>
-<p><span style="font-size: large;">         3、生成签名证书</span></p>
-<p><span style="font-size: large;">           sudo openssl req -x509 -newkey  rsa:2048 -keyout<span style="font-size: large;">/usr/local/etc/turn_server_pkey.pem</span> -out <span style="font-size: large;">/usr/local/etc/turn_server_cert.pem</span> -days 99999 -nodes</span></p>
-<p><span style="font-size: large;">4、启动</span></p>
-<p><span style="font-size: large;">          service coturn start</span></p>
-<p><span style="font-size: large;">五、coTurn连接信息接口</span></p>
-<p><span style="font-size: large;">       TURN REST API <a href="http://tools.ietf.org/html/draft-uberti-behave-turn-rest-00" target="_blank" rel="noopener">标准参考文档</a></span></p>
-<p><span style="font-size: large;">       返回json结果示例：</span></p>
-<p><span style="font-size: large;">       {“username”:”1456904882:1231244”,”password”:”jAph7EHMLuPJuxLLC1uRiI3kvq4=”,”ttl”:86400,”uris”:[“turn:192.168.214.129:3478?transport=udp”,”turn:192.168.214.129:3478?transport=tcp”,”turn:192.168.214.129:3479?transport=udp”,”turn:192.168.214.129:3479?transport=tcp”]}</span></p>
-<p><span style="font-size: large;">       1、username字段需要以timestamp + “:”  + username的形式输出</span></p>
-<p><span style="font-size: large;">       2、<span style="font-size: large;">响应的 password 字段，需要以 HMAC-SHA1 算法计算得出，<strong>公式为：【base64_encode( hmac( key,
-</strong></span></span></p>
-<p><span style="font-size: large;"><strong>            <span style="font-size: large;"><b>username ) )】</b></span></strong>。</span><span style="font-size: large;">此处的 key，为 coTurn 服务器配置中的 “static-auth-secret”值。以 key 作为      hmac 算法的密<span style="font-size: large;">钥，turn-username 为被计算的内容，得出的 hmac 摘要后，经 base64 编码得到最终密码。</span></span></p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       3、uris为后台配置好的，我这里写死</span></span></span></p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       4、很简单的接口，用惯了java，这里我准备用php，写起来比java快</span></span></span></p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       </span></span></span></p>
-<p><pre class="html">&lt;?php</pre></p>
-<pre><code>$request_username = $_GET[&quot;username&quot;];
-if(empty($request_username)) {
-    echo &quot;username == null&quot;;
-    exit;
-}
-$request_key = $_GET[&quot;key&quot;];
-$time_to_live = 600;
-$timestamp = time() + $time_to_live;//失效时间
-$response_username = $timestamp.&quot;:&quot;.$_GET[&quot;username&quot;];
-$response_key = $request_key;
-if(empty($response_key))
-    $response_key = &quot;密钥&quot;;//constants.py中CEOD_KEY
-
-$response_password = getSignature($response_username, $response_key);
-
-$jsonObj = new Response();
-$jsonObj-&amp;gt;username = $response_username;
-$jsonObj-&amp;gt;password = $response_password;
-$jsonObj-&amp;gt;ttl = 86400;
-$jsonObj-&amp;gt;uris = array(&quot;turn:192.168.214.129:3478?transport=udp&quot;,&quot;turn:192.168.214.129:3478?transport=tcp&quot;,&quot;turn:192.168.214.129:3479?transport=udp&quot;,&quot;turn:192.168.214.129:3479?transport=tcp&quot;);
-
-echo json_encode($jsonObj);
-
-/** 
-     * 使用HMAC-SHA1算法生成签名值 
-     * 
- * @param $str 源串 
-     * @param $key 密钥 
-     * 
-     * @return 签名值 
-     */  
-function getSignature($str, $key) {  
-    $signature = &quot;&quot;;  
-    if (function_exists(&apos;hash_hmac&apos;)) {  
-        $signature = base64_encode(hash_hmac(&quot;sha1&quot;, $str, $key, true));  
-    } else {  
-        $blocksize = 64;  
-        $hashfunc = &apos;sha1&apos;;  
-        if (strlen($key) &amp;gt; $blocksize) {  
-            $key = pack(&apos;H*&apos;, $hashfunc($key));  
-        }  
-        $key = str_pad($key, $blocksize, chr(0x00));  
-        $ipad = str_repeat(chr(0x36), $blocksize);  
-        $opad = str_repeat(chr(0x5c), $blocksize);  
-        $hmac = pack(  
-                &apos;H*&apos;, $hashfunc(  
-                        ($key ^ $opad) . pack(  
-                                &apos;H*&apos;, $hashfunc(  
-                                        ($key ^ $ipad) . $str  
-                                )  
-                        )  
-                )  
-        );  
-        $signature = base64_encode($hmac);  
-    }  
-    return $signature;  
-   }  
-
-class Response {
-    public $username = &quot;&quot;;
-    public $password = &quot;&quot;;
-    public $ttl = &quot;&quot;;
-    public $uris = array(&quot;&quot;);
-}
-</code></pre><p>?&gt;<br>5、拿nginx部署下，怎么部署自行百度</p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">六、测试</span></span></span></p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       部署成功后可在浏览器输入<a href="http://192.168.214.129:8080创建房间" target="_blank" rel="noopener">http://192.168.214.129:8080创建房间</a></span></span></span></p>
-<p>appRTCDemo连接也改成<span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;"><a href="http://192.168.214.129:8080" target="_blank" rel="noopener">http://192.168.214.129:8080</a></span></span></span>即可</p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">七、参考连接</span></span></span></p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       <a href="http://www.mamicode.com/info-detail-513556.html" target="_blank" rel="noopener">http://www.mamicode.com/info-detail-513556.html</a></span></span></span></p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       <a href="http://www.jianshu.com/p/c55ecf5a3fcf" target="_blank" rel="noopener">http://www.jianshu.com/p/c55ecf5a3fcf</a></span></span></span></p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       <a href="http://www.bubuko.com/infodetail-938737.html" target="_blank" rel="noopener">http://www.bubuko.com/infodetail-938737.html</a>l<br></span></span></span></p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">八、关于webrtc编译<br></span></span></span></p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       我只编译了android的版本，公司网速慢死，找了个国内下好的代码，分享到网盘了<a href="http://pan.baidu.com/s/1kUyNE55" target="_blank" rel="noopener">http://pan.baidu.com/s/1kUyNE55</a></span></span></span></p>
-<p><span style="font-size: large;"><span style="font-size: large;"><span style="font-size: large;">       AppRTCDemo的工程源码连接:<a href="http://download.csdn.net/detail/s569646547/9451013" target="_blank" rel="noopener">AppRTCDemo工程源码</a></span></span></span></p>
-<p><span style="font-size: large;">       运行截图：</span></p>
-<p><span style="font-size: large;">       <img src="http://img.blog.csdn.net/20160302182354507?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQv/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center" alt=""></span></p>
-<p><div></div><br>&nbsp;</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/未分类//" class="article-tag-list-link color4">未分类</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2016/09/13/apprtcwebrtc-e6-9c-ac-e5-9c-b0-e6-90-ad-e5-bb-ba-e6-9c-8d-e5-8a-a1-e5-99-a8/">展开全文 >></a>
         </p>
       
 

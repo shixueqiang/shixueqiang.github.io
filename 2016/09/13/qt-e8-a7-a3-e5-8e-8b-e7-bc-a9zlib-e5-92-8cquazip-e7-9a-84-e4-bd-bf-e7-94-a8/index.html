@@ -15,7 +15,7 @@
 <meta property="og:site_name" content="shixq">
 <meta property="og:description" content="首先我的开发环境是windows10，qtvs2015，vs2015。 一、zlib的编译 1、官网下载最新的zlib源码，最新的是1.2.8 2、用vs自带的命令行工具（编译32位的dll选x86，64位的选x64）进入到zlib根目录，执行 nmake -f win32/Makefile.msc ,在根目录下生成：zlib.lib(静态库)  zdll.lib(动态库的导入库)  zlib1.">
 <meta property="og:locale" content="default">
-<meta property="og:updated_time" content="2018-05-21T06:01:06.558Z">
+<meta property="og:updated_time" content="2018-05-28T02:31:32.233Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="QT解压缩zlib和quazip的使用">
 <meta name="twitter:description" content="首先我的开发环境是windows10，qtvs2015，vs2015。 一、zlib的编译 1、官网下载最新的zlib源码，最新的是1.2.8 2、用vs自带的命令行工具（编译32位的dll选x86，64位的选x64）进入到zlib根目录，执行 nmake -f win32/Makefile.msc ,在根目录下生成：zlib.lib(静态库)  zdll.lib(动态库的导入库)  zlib1.">
@@ -176,51 +176,12 @@
 <p>2、用vs自带的命令行工具（编译32位的dll选x86，64位的选x64）<span id="Label3">进入到zlib根目录，执行 nmake -f win32/Makefile.msc ,在根目录下生成：zlib.lib(静态库)  zdll.lib(动态库的导入库)  zlib1.dll(动态库) 。必要的头文件有zlib.h和zconf.h</span>。</p>
 <p>二、quazip的编译</p>
 <p>1、quazip是zlib的封装库，下载源码后用QT打开，编译需要依赖zlib库，右键项目添加库选外部库就好。我添加后在.pro文件末尾会生成下面配置,注意编译64位的quazip，使用的zlib也必须是64位的</p>
-<p><pre class="html">win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../zlib64/ -lzdll</pre></p>
-<p>else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../zlib64/ -lzdll</p>
-<p>else:unix: LIBS += -L$$PWD/../zlib64/ -lzdll</p>
-<p>INCLUDEPATH += $$PWD/../zlib64</p>
-<p>DEPENDPATH += $$PWD/../zlib64<br>&nbsp;</p>
+<p><pre class="html">win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../zlib64/ -lzdll<br>&nbsp;<br>else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../zlib64/ -lzdll<br>&nbsp;<br>else:unix: LIBS += -L$$PWD/../zlib64/ -lzdll<br>&nbsp;<br>INCLUDEPATH += $$PWD/../zlib64<br>&nbsp;<br>DEPENDPATH += $$PWD/../zlib64</pre><br>&nbsp;</p>
 <p>INCLUDEPATH是头文件路径</p>
 <p>2、右键项目构建会生成quazip.lib和quazip.dll，注意zlib和quazip的默认字符集都是ANSI，在调用的文件的字符集也必须是ANSI，否则编译不过,使用utf-8的话，都必须是utf-8.</p>
 <p>三、使用</p>
 <p>1、使用时同样需要添加外部库zlib和quazip，字符集需要和dll一样，下面是一段解压缩代码</p>
-<p><pre class="html">bool extract(const QString&amp; in_file_path, const QString&amp; out_file_path)<br>{</pre></p>
-<pre><code>QuaZip archive(in_file_path);
-if (!archive.open(QuaZip::mdUnzip))
-    return false;
-
-QString path = out_file_path;
-if (!path.endsWith(&quot;/&quot;) &amp;amp;&amp;amp; !out_file_path.endsWith(&quot;\\&quot;))
-    path += &quot;/&quot;;
-
-QDir dir(out_file_path);
-if (!dir.exists())
-    dir.mkpath(out_file_path);
-
-for( bool f = archive.goToFirstFile(); f; f = archive.goToNextFile() )
-{
-    QString filePath = archive.getCurrentFileName();
-    QuaZipFile zFile(archive.getZipName(), filePath);
-    zFile.open(QIODevice::ReadOnly );
-    QByteArray ba = zFile.readAll();
-    zFile.close();
-
-    if (filePath.endsWith(&quot;/&quot;))
-    {
-        dir.mkpath(filePath);
-    }
-    else
-    {
-        QFile dstFile(path + filePath);
-        if (!dstFile.open(QIODevice::WriteOnly))
-            return false;
-        dstFile.write(ba);
-        dstFile.close();
-    }
-}
-return true;
-</code></pre><p>}<br>2、构建运行，新版QT运行需要拷贝qtvs2015下的plugins下的platforms文件夹到debug或release里边运行，还需要zlib1.dll和quazip.dll放到生成的exe同级目录下。运行没反应的话检查防火墙和杀毒。</p>
+<p><pre class="html">bool extract(const QString&amp; in_file_path, const QString&amp; out_file_path)<br>{<br>    &nbsp;<br>    QuaZip archive(in_file_path);<br>    if (!archive.open(QuaZip::mdUnzip))<br>        return false;<br>    &nbsp;<br>    QString path = out_file_path;<br>    if (!path.endsWith(“/“) &amp;&amp; !out_file_path.endsWith(“\“))<br>        path += “/“;<br>    &nbsp;<br>    QDir dir(out_file_path);<br>    if (!dir.exists())<br>        dir.mkpath(out_file_path);<br>    &nbsp;<br>    for( bool f = archive.goToFirstFile(); f; f = archive.goToNextFile() )<br>    {<br>        QString filePath = archive.getCurrentFileName();<br>        QuaZipFile zFile(archive.getZipName(), filePath);<br>        zFile.open(QIODevice::ReadOnly );<br>        QByteArray ba = zFile.readAll();<br>        zFile.close();<br>        &nbsp;<br>        if (filePath.endsWith(“/“))<br>        {<br>            dir.mkpath(filePath);<br>        }<br>        else<br>        {<br>            QFile dstFile(path + filePath);<br>            if (!dstFile.open(QIODevice::WriteOnly))<br>                return false;<br>            dstFile.write(ba);<br>            dstFile.close();<br>        }<br>    }<br>    return true;<br>}</pre><br>2、构建运行，新版QT运行需要拷贝qtvs2015下的plugins下的platforms文件夹到debug或release里边运行，还需要zlib1.dll和quazip.dll放到生成的exe同级目录下。运行没反应的话检查防火墙和杀毒。</p>
 
       
 
@@ -335,8 +296,8 @@ return true;
     </a>
   
   
-    <a href="/2016/09/13/apprtcwebrtc-e6-9c-ac-e5-9c-b0-e6-90-ad-e5-bb-ba-e6-9c-8d-e5-8a-a1-e5-99-a8/" id="article-nav-older" class="article-nav-link-wrap">
-      <div class="article-nav-title">apprtc(webrtc) 本地搭建服务器</div>
+    <a href="/2016/09/13/teamtalk-ubuntu-e6-9c-8d-e5-8a-a1-e7-ab-af-e9-83-a8-e7-bd-b2/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">TeamTalk——ubuntu服务端部署</div>
       <i class="icon-circle-right"></i>
     </a>
   

@@ -8,17 +8,17 @@
   <link rel="dns-prefetch" href="http://www.shixq.com">
   <title>android根据包名获取签名MD5信息 | shixq</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="private Signature[] getRawSignature(Context paramContext, String paramString) { if ((paramString == null) || (paramString.length() == 0)) { errout(“getSignature, packageName is null”); return null; }">
+  <meta name="description" content="private Signature[] getRawSignature(Context paramContext, String paramString) {    if ((paramString == null) || (paramString.length() == 0)) {      errout(“getSignature, packageName is null”);      re">
 <meta property="og:type" content="article">
 <meta property="og:title" content="android根据包名获取签名MD5信息">
 <meta property="og:url" content="http://www.shixq.com/2017/05/11/android-e6-a0-b9-e6-8d-ae-e5-8c-85-e5-90-8d-e8-8e-b7-e5-8f-96-e7-ad-be-e5-90-8dmd5-e4-bf-a1-e6-81-af/index.html">
 <meta property="og:site_name" content="shixq">
-<meta property="og:description" content="private Signature[] getRawSignature(Context paramContext, String paramString) { if ((paramString == null) || (paramString.length() == 0)) { errout(“getSignature, packageName is null”); return null; }">
+<meta property="og:description" content="private Signature[] getRawSignature(Context paramContext, String paramString) {    if ((paramString == null) || (paramString.length() == 0)) {      errout(“getSignature, packageName is null”);      re">
 <meta property="og:locale" content="default">
-<meta property="og:updated_time" content="2018-05-21T06:01:06.558Z">
+<meta property="og:updated_time" content="2018-05-28T02:31:32.233Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="android根据包名获取签名MD5信息">
-<meta name="twitter:description" content="private Signature[] getRawSignature(Context paramContext, String paramString) { if ((paramString == null) || (paramString.length() == 0)) { errout(“getSignature, packageName is null”); return null; }">
+<meta name="twitter:description" content="private Signature[] getRawSignature(Context paramContext, String paramString) {    if ((paramString == null) || (paramString.length() == 0)) {      errout(“getSignature, packageName is null”);      re">
   
     <link rel="alternative" href="/atom.xml" title="shixq" type="application/atom+xml">
   
@@ -170,48 +170,7 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <ol>
-<li><span class="keyword">private</span> Signature[] getRawSignature(Context paramContext, String paramString) {</li>
-<li><span class="keyword">if</span> ((paramString == <span class="keyword">null</span>) || (paramString.length() == <span class="number">0</span>)) {</li>
-<li>errout(<span class="string">“getSignature, packageName is null”</span>);</li>
-<li><span class="keyword">return</span> <span class="keyword">null</span>;</li>
-<li>}</li>
-<li>PackageManager localPackageManager = paramContext.getPackageManager();</li>
-<li>PackageInfo localPackageInfo;</li>
-<li><span class="keyword">try</span> {</li>
-<li>localPackageInfo = localPackageManager.getPackageInfo(paramString, PackageManager.GET_SIGNATURES);</li>
-<li><span class="keyword">if</span> (localPackageInfo == <span class="keyword">null</span>) {</li>
-<li>errout(<span class="string">“info is null, packageName = “</span> + paramString);</li>
-<li><span class="keyword">return</span> <span class="keyword">null</span>;</li>
-<li>}</li>
-<li>} <span class="keyword">catch</span> (PackageManager.NameNotFoundException localNameNotFoundException) {</li>
-<li>errout(<span class="string">“NameNotFoundException”</span>);</li>
-<li><span class="keyword">return</span> <span class="keyword">null</span>;</li>
-<li>}</li>
-<li><span class="keyword">return</span> localPackageInfo.signatures;</li>
-<li><p>}</p>
-</li>
-<li><p><span class="keyword">private</span> Signature[] getRawSignature(Context paramContext, String paramString) {</p>
-</li>
-<li><span class="keyword">if</span> ((paramString == <span class="keyword">null</span>) || (paramString.length() == <span class="number">0</span>)) {</li>
-<li>errout(<span class="string">“getSignature, packageName is null”</span>);</li>
-<li><span class="keyword">return</span> <span class="keyword">null</span>;</li>
-<li>}</li>
-<li>PackageManager localPackageManager = paramContext.getPackageManager();</li>
-<li>PackageInfo localPackageInfo;</li>
-<li><span class="keyword">try</span> {</li>
-<li>localPackageInfo = localPackageManager.getPackageInfo(paramString, PackageManager.GET_SIGNATURES);</li>
-<li><span class="keyword">if</span> (localPackageInfo == <span class="keyword">null</span>) {</li>
-<li>errout(<span class="string">“info is null, packageName = “</span> + paramString);</li>
-<li><span class="keyword">return</span> <span class="keyword">null</span>;</li>
-<li>}</li>
-<li>} <span class="keyword">catch</span> (PackageManager.NameNotFoundException localNameNotFoundException) {</li>
-<li>errout(<span class="string">“NameNotFoundException”</span>);</li>
-<li><span class="keyword">return</span> <span class="keyword">null</span>;</li>
-<li>}</li>
-<li><span class="keyword">return</span> localPackageInfo.signatures;</li>
-<li>}<br>源码地址：<a href="https://github.com/shixueqiang/GenSignature" target="_blank" rel="noopener">GenSignature</a></li>
-</ol>
+        <p><pre><br>private Signature[] getRawSignature(Context paramContext, String paramString) {<br>    if ((paramString == null) || (paramString.length() == 0)) {<br>      errout(“getSignature, packageName is null”);<br>      return null;<br>    }<br>    PackageManager localPackageManager = paramContext.getPackageManager();<br>    PackageInfo localPackageInfo;<br>    try {<br>      localPackageInfo=localPackageManager.getPackageInfo(paramString,PackageManager.GET_SIGNATURES);<br>      if (localPackageInfo == null) {<br>        errout(“info is null, packageName = “ + paramString);<br>        return null;<br>      }<br>    } catch (PackageManager.NameNotFoundException localNameNotFoundException) {<br>      errout(“NameNotFoundException”);<br>      return null;<br>    }<br>    return localPackageInfo.signatures;<br>}<br>private Signature[] getRawSignature(Context paramContext, String paramString) {<br>    if ((paramString == null) || (paramString.length() == 0)) {<br>      errout(“getSignature, packageName is null”);<br>      return null;<br>    }<br>    PackageManager localPackageManager = paramContext.getPackageManager();<br>    PackageInfo localPackageInfo;<br>    try {<br>      localPackageInfo=localPackageManager.getPackageInfo(paramString,PackageManager.GET_SIGNATURES);<br>      if (localPackageInfo == null) {<br>        errout(“info is null, packageName = “ + paramString);<br>        return null;<br>      }<br>    } catch (PackageManager.NameNotFoundException localNameNotFoundException) {<br>        errout(“NameNotFoundException”);<br>        return null;<br>    }<br>    return localPackageInfo.signatures;<br>}</pre><br>源码地址：<a href="https://github.com/shixueqiang/GenSignature" target="_blank" rel="noopener">GenSignature</a></p>
 
       
 

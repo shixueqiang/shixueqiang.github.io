@@ -15,7 +15,7 @@
 <meta property="og:site_name" content="shixq">
 <meta property="og:description" content="pcre2源码ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre2-10.31.zip 我是直接用的aosp源码树下external/pcre模块的代码，然后先将pcre2编译成静态库，直接用ndk-build编译。 Android studio 新建支持c++的native工程，将pcrecpp代码导入到工程中，以下是配置文件：">
 <meta property="og:locale" content="default">
-<meta property="og:updated_time" content="2018-05-21T06:01:06.558Z">
+<meta property="og:updated_time" content="2018-05-28T02:31:32.233Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="android pcre2使用及signal 11 (SIGSEGV) fault addr error">
 <meta name="twitter:description" content="pcre2源码ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre2-10.31.zip 我是直接用的aosp源码树下external/pcre模块的代码，然后先将pcre2编译成静态库，直接用ndk-build编译。 Android studio 新建支持c++的native工程，将pcrecpp代码导入到工程中，以下是配置文件：">
@@ -173,27 +173,9 @@
         <p>pcre2源码<a href="ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre2-10.31.zip" target="_blank" rel="noopener">ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre2-10.31.zip</a></p>
 <p>我是直接用的aosp源码树下external/pcre模块的代码，然后先将pcre2编译成静态库，直接用ndk-build编译。</p>
 <p>Android studio 新建支持c++的native工程，将pcrecpp代码导入到工程中，以下是配置文件：</p>
-<p><pre>externalNativeBuild {</pre></p>
-<pre><code>// For ndk-build, instead use ndkBuild {}
-cmake {
-
-    // Passes optional arguments to CMake.
-    arguments &quot;-DANDROID_ARM_NEON=TRUE&quot;, &quot;-DANDROID_TOOLCHAIN=clang&quot;, &apos;-DANDROID_STL=gnustl_shared&apos;
-
-    // Sets optional flags for the C compiler.
-    cFlags &quot;-D_EXAMPLE_C_FLAG1&quot;, &quot;-D_EXAMPLE_C_FLAG2&quot;
-
-    // Sets a flag to enable format macro constants for the C++ compiler.
-    cppFlags &quot;-D__STDC_FORMAT_MACROS&quot;
-
-    cppFlags &quot;-std=c++11&quot;
-}
-</code></pre><p>}<br>ndk {<br>    // Specifies the ABI configurations of your native<br>    // libraries Gradle should build and package with your APK.<br>    abiFilters ‘armeabi-v7a’, ‘arm64-v8a’<br>}<br>需要注意的是gnustl需要使用动态库，我最初用的静态库在arm64位的手机上string assign就会报signal 11 (SIGSEGV) fault addr，原因可能是<a href="https://stackoverflow.com/questions/12590581/crash-on-stl-string-assignment-ndk" target="_blank" rel="noopener">https://stackoverflow.com/questions/12590581/crash-on-stl-string-assignment-ndk</a></p>
+<p><pre>externalNativeBuild {<br>    &nbsp;<br>    // For ndk-build, instead use ndkBuild {}<br>    cmake {<br>        &nbsp;<br>        // Passes optional arguments to CMake.<br>        arguments “-DANDROID_ARM_NEON=TRUE”, “-DANDROID_TOOLCHAIN=clang”, ‘-DANDROID_STL=gnustl_shared’<br>        &nbsp;<br>        // Sets optional flags for the C compiler.<br>        cFlags “-D_EXAMPLE_C_FLAG1”, “-D_EXAMPLE_C_FLAG2”<br>        &nbsp;<br>        // Sets a flag to enable format macro constants for the C++ compiler.<br>        cppFlags “-D__STDC_FORMAT_MACROS”<br>        &nbsp;<br>        cppFlags “-std=c++11”<br>    }<br>}<br>ndk {<br>    // Specifies the ABI configurations of your native<br>    // libraries Gradle should build and package with your APK.<br>    abiFilters ‘armeabi-v7a’, ‘arm64-v8a’<br>}<br></pre><br>需要注意的是gnustl需要使用动态库，我最初用的静态库在arm64位的手机上string assign就会报signal 11 (SIGSEGV) fault addr，原因可能是<a href="https://stackoverflow.com/questions/12590581/crash-on-stl-string-assignment-ndk" target="_blank" rel="noopener">https://stackoverflow.com/questions/12590581/crash-on-stl-string-assignment-ndk</a></p>
 <p>pcrecpp的使用：</p>
-<p><pre>JNIEXPORT jboolean Java_com_shixq_www_pcre2test_PhoneUtil_isPhoneMatch<br>        (JNIEnv <em>env, jclass thiz, jstring phone, jstring regex) {<br>    char</em> _phone = jstringToChar(env, phone);<br>    char* _regex = jstringToChar(env, regex);<br>    LOGE(“phone is %s,regex is %s”, _phone, _regex);<br>    pcrecpp::RE re(_regex);<br>    bool isMatch = re.FullMatch(_phone);<br>    return isMatch;<br>}</pre></p>
-<p>JNIEXPORT jstring Java_com_shixq_www_pcre2test_PhoneUtil_getPhonePrefix<br>        (JNIEnv <em>env, jclass thiz, jstring phone, jstring regex) {<br>    char</em> _phone = jstringToChar(env, phone);<br>    char* _regex = jstringToChar(env, regex);<br>    pcrecpp::RE re(_regex);<br>    string prefix;<br>    string minPhone;<br>    re.FullMatch(_phone, &amp;prefix, &amp;minPhone);<br>    LOGE(“phone prefix is %s”, prefix.c_str());<br>    return env-&gt;NewStringUTF(prefix.c_str());<br>}</p>
-<p>JNIEXPORT jstring Java_com_shixq_www_pcre2test_PhoneUtil_getMinPhone<br>        (JNIEnv <em>env, jclass thiz, jstring phone, jstring regex) {<br>    char</em> _phone = jstringToChar(env, phone);<br>    char* _regex = jstringToChar(env, regex);<br>    pcrecpp::RE re(_regex);<br>    string prefix;<br>    string minPhone;<br>    re.FullMatch(_phone, &amp;prefix, &amp;minPhone);<br>    LOGE(“phone un prefix is %s”, minPhone.c_str());<br>    return env-&gt;NewStringUTF(minPhone.c_str());<br>}</p>
-<p>完整代码地址：<a href="https://github.com/shixueqiang/pcre2test" target="_blank" rel="noopener">https://github.com/shixueqiang/pcre2test</a><br>&nbsp;</p>
+<p><pre>JNIEXPORT jboolean Java_com_shixq_www_pcre2test_PhoneUtil_isPhoneMatch<br>        (JNIEnv <em>env, jclass thiz, jstring phone, jstring regex) {<br>    char</em> _phone = jstringToChar(env, phone);<br>    char<em> _regex = jstringToChar(env, regex);<br>    LOGE(“phone is %s,regex is %s”, _phone, _regex);<br>    pcrecpp::RE re(_regex);<br>    bool isMatch = re.FullMatch(_phone);<br>    return isMatch;<br>}<br>&nbsp;<br>JNIEXPORT jstring Java_com_shixq_www_pcre2test_PhoneUtil_getPhonePrefix<br>        (JNIEnv </em>env, jclass thiz, jstring phone, jstring regex) {<br>    char<em> _phone = jstringToChar(env, phone);<br>    char</em> _regex = jstringToChar(env, regex);<br>    pcrecpp::RE re(_regex);<br>    string prefix;<br>    string minPhone;<br>    re.FullMatch(_phone, &amp;prefix, &amp;minPhone);<br>    LOGE(“phone prefix is %s”, prefix.c_str());<br>    return env-&gt;NewStringUTF(prefix.c_str());<br>}<br>&nbsp;<br>JNIEXPORT jstring Java_com_shixq_www_pcre2test_PhoneUtil_getMinPhone<br>        (JNIEnv <em>env, jclass thiz, jstring phone, jstring regex) {<br>    char</em> _phone = jstringToChar(env, phone);<br>    char* _regex = jstringToChar(env, regex);<br>    pcrecpp::RE re(_regex);<br>    string prefix;<br>    string minPhone;<br>    re.FullMatch(_phone, &amp;prefix, &amp;minPhone);<br>    LOGE(“phone un prefix is %s”, minPhone.c_str());<br>    return env-&gt;NewStringUTF(minPhone.c_str());<br>}<br></pre><br>完整代码地址：<a href="https://github.com/shixueqiang/pcre2test" target="_blank" rel="noopener">https://github.com/shixueqiang/pcre2test</a><br>&nbsp;</p>
 <p>&nbsp;</p>
 <p>&nbsp;</p>
 

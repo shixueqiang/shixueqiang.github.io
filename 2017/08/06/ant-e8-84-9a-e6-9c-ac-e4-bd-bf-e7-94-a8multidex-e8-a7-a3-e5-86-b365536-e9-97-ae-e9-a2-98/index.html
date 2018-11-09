@@ -15,7 +15,7 @@
 <meta property="og:site_name" content="shixq">
 <meta property="og:description" content="现在的android项目应该大多都用gradle构建了吧，但是仍然有很多老项目使用的ant工具，这里并不推荐使用ant构建，因为最新的android sdk tools里边已经去掉了ant相关的lib包。不管gradle也好，ant也好，其实编译打包apk的过程基本都是一样的。 我遇到的这个项目，经历了两次方案的调整。 方案一： 最开始并没用dx的multidex参数，而是将所有的第三方jar包（">
 <meta property="og:locale" content="default">
-<meta property="og:updated_time" content="2018-05-21T06:01:06.558Z">
+<meta property="og:updated_time" content="2018-05-28T02:31:32.233Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="ant脚本使用multidex解决65536问题">
 <meta name="twitter:description" content="现在的android项目应该大多都用gradle构建了吧，但是仍然有很多老项目使用的ant工具，这里并不推荐使用ant构建，因为最新的android sdk tools里边已经去掉了ant相关的lib包。不管gradle也好，ant也好，其实编译打包apk的过程基本都是一样的。 我遇到的这个项目，经历了两次方案的调整。 方案一： 最开始并没用dx的multidex参数，而是将所有的第三方jar包（">
@@ -174,103 +174,13 @@
 <p><span style="font-size: 18px;">我遇到的这个项目，经历了两次方案的调整。</span></p>
 <p><span style="font-size: 18px;">方案一：</span></p>
 <p><span style="font-size: 18px;">最开始并没用dx的multidex参数，而是将所有的第三方jar包（应用启动时用的除外）打到从包中去，从包可以是多个，剩下的源码打到主包中，也就是分别调用dx打出dex包。</span></p>
-<p><pre class="html"><span style="font-size: 14px;">&lt;macrodef name=”dex-helper”&gt;<br>        &lt;element name=”external-libs” optional=”yes” /&gt;<br>        &lt;attribute name=”nolocals” default=”false” /&gt;<br>        &lt;sequential&gt;<br>            &lt;!– sets the primary input for dex. If a pre-dex task sets it to<br>                 something else this has no effect –&gt;<br>            &lt;property name=”out.dex.input.absolute.dir” value=”${out.classes.absolute.dir}” /&gt;</span></pre></p>
-<pre><code>    &amp;lt;!-- set the secondary dx input: the project (and library) jar files
-         If a pre-dex task sets it to something else this has no effect --&amp;gt;
-    &amp;lt;if&amp;gt;
-        &amp;lt;condition&amp;gt;
-            &amp;lt;isreference refid=&quot;out.dex.jar.input.ref&quot; /&amp;gt;
-        &amp;lt;/condition&amp;gt;
-        &amp;lt;else&amp;gt;
-            &amp;lt;path id=&quot;out.dex.jar.input.ref&quot;&amp;gt;
-                &amp;lt;path refid=&quot;project.all.jars.path&quot; /&amp;gt;
-            &amp;lt;/path&amp;gt;
-        &amp;lt;/else&amp;gt;
-    &amp;lt;/if&amp;gt;
-    &amp;lt;echo&amp;gt;Converting external libraries into ${assets}/${dex}...&amp;lt;/echo&amp;gt;
-&amp;lt;delete file=&quot;${asset.absolute.dir}\plug.jar&quot;/&amp;gt;
-&amp;lt;delete file=&quot;${asset.absolute.dir}\plug2.jar&quot;/&amp;gt;
-&amp;lt;if condition=&quot;${proguard.enabled}&quot;&amp;gt;
-        &amp;lt;then&amp;gt;
-            &amp;lt;separete 
-                inputjar=&quot;${out.dex.input.absolute.dir}&quot;
-                mapping=&quot;${obfuscate.absolute.dir}/mapping.txt&quot;
-                alljarpath=&quot;project.all.jars.path&quot;
-    plugjarconfig=&quot;${plug.jar.config}&quot;
-    plugjarconfig2=&quot;${plug.jar.config2}&quot;
-    plugjarpath=&quot;project.plug.path&quot;
-    plugjarpath2=&quot;project.plug.path2&quot;
-    projectjarpath=&quot;project.core.path&quot;/&amp;gt;
-            &amp;lt;path id=&quot;project.dex.core.path&quot;&amp;gt;
-                &amp;lt;path refid=&quot;project.core.path&quot; /&amp;gt;
-            &amp;lt;/path&amp;gt;
-        &amp;lt;/then&amp;gt;
-        &amp;lt;else&amp;gt;
-            &amp;lt;filterlib &lt;/span&gt;&lt;/pre&gt;
-</code></pre><p><pre class="html"><span style="font-size: 14px;">                alljarpath=”project.all.jars.path”<br>                   plugjarconfig=”${plug.jar.config}”<br>                   plugjarconfig2=”${plug.jar.config2}”<br>                    plugjarpath=”project.plug.path”<br>                    plugjarpath2=”project.plug.path2”<br>                    projectjarpath=”project.core.path”/&gt;<br>                         &lt;path id=”project.dex.core.path”&gt;<br>                         &lt;path path=”${out.dex.input.absolute.dir}”/&gt;<br>                           &lt;path refid=”project.core.path” /&gt;<br>                        &lt;/path&gt;<br>                &lt;/else&gt;<br>       &lt;/if&gt;</span></pre></p>
-<pre><code>        &amp;lt;dex executable=&quot;${dx}&quot;
-                output=&quot;${asset.absolute.dir}\plug.jar&quot;
-                  dexedlibs=&quot;${out.dexed.absolute.dir}&quot;
-                nolocals=&quot;@{nolocals}&quot;
-                forceJumbo=&quot;${dex.force.jumbo}&quot;
-                disableDexMerger=&quot;${dex.disable.merger}&quot;
-                verbose=&quot;${verbose}&quot;&amp;gt;
-            &amp;lt;path refid=&quot;project.plug.path&quot; /&amp;gt;
-        &amp;lt;/dex&amp;gt;
-        &amp;lt;dex executable=&quot;${dx}&quot;
-                output=&quot;${asset.absolute.dir}\plug2.jar&quot;
-                  dexedlibs=&quot;${out.dexed.absolute.dir}&quot;
-                nolocals=&quot;@{nolocals}&quot;
-                forceJumbo=&quot;${dex.force.jumbo}&quot;
-                disableDexMerger=&quot;${dex.disable.merger}&quot;
-                verbose=&quot;${verbose}&quot;&amp;gt;
-            &amp;lt;path refid=&quot;project.plug.path2&quot; /&amp;gt;
-        &amp;lt;/dex&amp;gt;
-        &amp;lt;delete file=&quot;${asset.absolute.dir}\plug.jar.d&quot;/&amp;gt;
-        &amp;lt;delete file=&quot;${asset.absolute.dir}\plug2.jar.d&quot;/&amp;gt;
-    &amp;lt;checksum file=&quot;${asset.absolute.dir}\plug.jar&quot; forceOverwrite=&quot;yes&quot;/&amp;gt;
-    &amp;lt;checksum file=&quot;${asset.absolute.dir}\plug2.jar&quot; forceOverwrite=&quot;yes&quot;/&amp;gt;
-    &amp;lt;dex executable=&quot;${dx}&quot;
-                output=&quot;${intermediate.dex.file}&quot;
-                dexedlibs=&quot;${out.dexed.absolute.dir}&quot;
-                nolocals=&quot;@{nolocals}&quot;
-                forceJumbo=&quot;${dex.force.jumbo}&quot;
-                disableDexMerger=&quot;${dex.disable.merger}&quot;
-                verbose=&quot;${verbose}&quot;&amp;gt;
-              &amp;lt;path refid=&quot;project.dex.core.path&quot; /&amp;gt;
-            &amp;lt;external-libs /&amp;gt;
-        &amp;lt;/dex&amp;gt;
-
-    &amp;lt;/sequential&amp;gt;
-&amp;lt;/macrodef&amp;gt;&lt;/span&gt;&lt;/pre&gt;
-</code></pre><p><span style="font-size: 18px;">其中separete和filterlib是两个自定义的task，作用都是从project.all.jars.path中过滤出事先定义好的第三方jar包的path，区别是separete是在代码经过混淆后执行，将混淆后的代码生成plug.jar，可以看到调用了三次dex。</span></p>
+<p><pre class="html"><span style="font-size: 14px;">&lt;macrodef name=”dex-helper”&gt;<br>        &lt;element name=”external-libs” optional=”yes” /&gt;<br>        &lt;attribute name=”nolocals” default=”false” /&gt;<br>        &lt;sequential&gt;<br>            &lt;!– sets the primary input for dex. If a pre-dex task sets it to<br>                 something else this has no effect –&gt;<br>            &lt;property name=”out.dex.input.absolute.dir” value=”${out.classes.absolute.dir}” /&gt;<br>            &nbsp;<br>            &lt;!– set the secondary dx input: the project (and library) jar files<br>                 If a pre-dex task sets it to something else this has no effect –&gt;<br>            &lt;if&gt;<br>                &lt;condition&gt;<br>                    &lt;isreference refid=”out.dex.jar.input.ref” /&gt;<br>                &lt;/condition&gt;<br>                &lt;else&gt;<br>                    &lt;path id=”out.dex.jar.input.ref”&gt;<br>                        &lt;path refid=”project.all.jars.path” /&gt;<br>                    &lt;/path&gt;<br>                &lt;/else&gt;<br>            &lt;/if&gt;<br>            &lt;echo&gt;Converting external libraries into ${assets}/${dex}…&lt;/echo&gt;<br>        &lt;delete file=”${asset.absolute.dir}\plug.jar”/&gt;<br>        &lt;delete file=”${asset.absolute.dir}\plug2.jar”/&gt;<br>        &lt;if condition=”${proguard.enabled}”&gt;<br>                &lt;then&gt;<br>                    &lt;separete<br>                        inputjar=”${out.dex.input.absolute.dir}”<br>                        mapping=”${obfuscate.absolute.dir}/mapping.txt”<br>                        alljarpath=”project.all.jars.path”<br>            plugjarconfig=”${plug.jar.config}”<br>            plugjarconfig2=”${plug.jar.config2}”<br>            plugjarpath=”project.plug.path”<br>            plugjarpath2=”project.plug.path2”<br>            projectjarpath=”project.core.path”/&gt;<br>                    &lt;path id=”project.dex.core.path”&gt;<br>                        &lt;path refid=”project.core.path” /&gt;<br>                    &lt;/path&gt;<br>                &lt;/then&gt;<br>                &lt;else&gt;<br>                    &lt;filterlib </span><br>                                alljarpath=”project.all.jars.path”<br>                   plugjarconfig=”${plug.jar.config}”<br>                   plugjarconfig2=”${plug.jar.config2}”<br>                    plugjarpath=”project.plug.path”<br>                    plugjarpath2=”project.plug.path2”<br>                    projectjarpath=”project.core.path”/&gt;<br>                         &lt;path id=”project.dex.core.path”&gt;<br>                         &lt;path path=”${out.dex.input.absolute.dir}”/&gt;<br>                           &lt;path refid=”project.core.path” /&gt;<br>                        &lt;/path&gt;<br>                &lt;/else&gt;<br>       &lt;/if&gt;<br>            &nbsp;<br>            &lt;dex executable=”${dx}”<br>                    output=”${asset.absolute.dir}\plug.jar”<br>                      dexedlibs=”${out.dexed.absolute.dir}”<br>                    nolocals=”@{nolocals}”<br>                    forceJumbo=”${dex.force.jumbo}”<br>                    disableDexMerger=”${dex.disable.merger}”<br>                    verbose=”${verbose}”&gt;<br>                &lt;path refid=”project.plug.path” /&gt;<br>            &lt;/dex&gt;<br>            &lt;dex executable=”${dx}”<br>                    output=”${asset.absolute.dir}\plug2.jar”<br>                      dexedlibs=”${out.dexed.absolute.dir}”<br>                    nolocals=”@{nolocals}”<br>                    forceJumbo=”${dex.force.jumbo}”<br>                    disableDexMerger=”${dex.disable.merger}”<br>                    verbose=”${verbose}”&gt;<br>                &lt;path refid=”project.plug.path2” /&gt;<br>            &lt;/dex&gt;<br>            &lt;delete file=”${asset.absolute.dir}\plug.jar.d”/&gt;<br>            &lt;delete file=”${asset.absolute.dir}\plug2.jar.d”/&gt;<br>        &lt;checksum file=”${asset.absolute.dir}\plug.jar” forceOverwrite=”yes”/&gt;<br>        &lt;checksum file=”${asset.absolute.dir}\plug2.jar” forceOverwrite=”yes”/&gt;<br>        &lt;dex executable=”${dx}”<br>                    output=”${intermediate.dex.file}”<br>                    dexedlibs=”${out.dexed.absolute.dir}”<br>                    nolocals=”@{nolocals}”<br>                    forceJumbo=”${dex.force.jumbo}”<br>                    disableDexMerger=”${dex.disable.merger}”<br>                    verbose=”${verbose}”&gt;<br>                  &lt;path refid=”project.dex.core.path” /&gt;<br>                &lt;external-libs /&gt;<br>            &lt;/dex&gt;<br>        &nbsp;<br>        &lt;/sequential&gt;<br>    &lt;/macrodef&gt;</pre><br><span style="font-size: 18px;">其中separete和filterlib是两个自定义的task，作用都是从project.all.jars.path中过滤出事先定义好的第三方jar包的path，区别是separete是在代码经过混淆后执行，将混淆后的代码生成plug.jar，可以看到调用了三次dex。</span></p>
 <p><span style="font-size: 18px;">代码中加载从包的方法：</span></p>
 <p><pre class="html"><span style="font-size: 14px;">    PathClassLoader pathClassLoader = (PathClassLoader) app.getClassLoader();<br>    DexClassLoader dexClassLoader = new DexClassLoader(libPath, app.getDir(“dex”, 0).getAbsolutePath(), libPath, app.getClassLoader());<br>    InjectResult result = null;<br>    try {<br>        Object dexElements = combineArray(getDexElements(getPathList(pathClassLoader)), getDexElements(getPathList(dexClassLoader)));<br>        Object pathList = getPathList(pathClassLoader);<br>        setField(pathList, pathList.getClass(), “dexElements”, dexElements);<br>    } catch (IllegalArgumentException e) {<br>        result = makeInjectResult(false, e);<br>        e.printStackTrace();<br>    }</span></pre><br><span style="font-size: 18px;"><br>DexClassLoader加载从包dex，然后将pathClassLoader与dexClassLoader中的<span style="color: #660066; font-family: 'Source Code Pro',monospace; white-space: pre;">DexPathList的</span>dexElements属性值合并，再放到pathClassLoader中的<span style="color: #660066; font-family: 'Source Code Pro',monospace; white-space: pre;">DexPathList</span>中。最开始方案一是满足需求的，但随着主包越来越大，终于还是65536了，这种只分出去第三方jar包的做法还是不太灵活，于是有了方案二。</span></p>
 <p><span style="font-size: 18px;">方案二：</span></p>
 <p><span style="font-size: 18px;">使用dx的multidex参数，指定maindexlist清单文件，在这个清单文件中的类会打到主包中，清单文件的生成可以使用build-tools下的mainDexClasses脚本生成。</span></p>
 <p>&nbsp;</p>
-<p><pre class="html"><span style="font-size: 14px;"> &lt;macrodef name=”dex-helper” &gt;<br>        &lt;element name=”external-libs” optional=”yes” /&gt;<br>        &lt;attribute name=”nolocals” default=”false” /&gt;<br>        &lt;sequential&gt;<br>            &lt;!– sets the primary input for dex. If a pre-dex task sets it to<br>                 something else this has no effect –&gt;<br>            &lt;property name=”out.dex.input.absolute.dir” value=”${out.classes.absolute.dir}” /&gt;<br>             &lt;if&gt;<br>                &lt;condition&gt;<br>                    &lt;isreference refid=”out.dex.jar.input.ref” /&gt;<br>                &lt;/condition&gt;<br>                &lt;else&gt;<br>                    &lt;path id=”out.dex.jar.input.ref”&gt;<br>                        &lt;path refid=”project.all.jars.path” /&gt;<br>                    &lt;/path&gt;<br>                &lt;/else&gt;<br>            &lt;/if&gt;<br>            &lt;echo message=”start dx ${maindexlist.dir}”/&gt;<br>            &lt;multidex executable=”${dx}”<br>                    output=”${out.dir}”<br>                    dexedlibs=”${out.dexed.absolute.dir}”<br>                    nolocals=”@{nolocals}”<br>                    forceJumbo=”${dex.force.jumbo}”<br>                    disableDexMerger=”${dex.disable.merger}”<br>                    multidex=”true”<br>                    mainDexList=”${maindexlist.dir}”<br>                    verbose=”${verbose}”&gt;<br>                &lt;path path=”${out.dex.input.absolute.dir}”/&gt;<br>                &lt;path refid=”out.dex.jar.input.ref” /&gt;<br>                &lt;external-libs /&gt;<br>            &lt;/multidex&gt;<br>        &lt;/sequential&gt;<br>    &lt;/macrodef&gt;</span></pre></p>
-<p><pre class="html"><span style="font-size: 14px;">&lt;target name=”-maindexlist” depends=”-set-release-mode, -compile, -post-compile, -obfuscate”&gt;<br>        &lt;property name=”out.dex.input.absolute.dir” value=”${out.classes.absolute.dir}” /&gt;</span></pre></p>
-<pre><code>    &amp;lt;!-- set the secondary dx input: the project (and library) jar files
-         If a pre-dex task sets it to something else this has no effect --&amp;gt;
-    &amp;lt;if&amp;gt;
-        &amp;lt;condition&amp;gt;
-            &amp;lt;isreference refid=&quot;out.dex.jar.input.ref&quot; /&amp;gt;
-        &amp;lt;/condition&amp;gt;
-        &amp;lt;else&amp;gt;
-            &amp;lt;path id=&quot;out.dex.jar.input.ref&quot;&amp;gt;
-                &amp;lt;path refid=&quot;project.all.jars.path&quot; /&amp;gt;
-            &amp;lt;/path&amp;gt;
-        &amp;lt;/else&amp;gt;
-    &amp;lt;/if&amp;gt;
-    &amp;lt;maindexlist output=&quot;build/maindexlist-proguard.txt&quot;
-            mainDexList=&quot;build/maindexlist.txt&quot;
-            mappingFile=&quot;${out.absolute.dir}/proguard/mapping.txt&quot; &amp;gt;
-        &amp;lt;path path=&quot;${out.dex.input.absolute.dir}&quot;/&amp;gt;
-        &amp;lt;path refid=&quot;out.dex.jar.input.ref&quot; /&amp;gt;
-    &amp;lt;/maindexlist&amp;gt;
-&amp;lt;/target&amp;gt;&lt;/span&gt;&lt;/pre&gt;
-</code></pre><p><span style="font-size: 18px;">m</span><span style="font-size: 18px;">ultidex和maindexlist也是两个自定义task，multidex其实就是调用的dx –dex –multi-dex –main-dex-list=maindexlist.txt  –minimal-main-dex –output bin –input-list,maindexlist task的作用是生成混淆后的主包清单文件。应用启动时代码原理和方案一差不多，也可以直接使用官方的android-surpport-multidex.jar包</span></p>
+<p><pre class="html"><span style="font-size: 14px;"> &lt;macrodef name=”dex-helper” &gt;<br>        &lt;element name=”external-libs” optional=”yes” /&gt;<br>        &lt;attribute name=”nolocals” default=”false” /&gt;<br>        &lt;sequential&gt;<br>            &lt;!– sets the primary input for dex. If a pre-dex task sets it to<br>                 something else this has no effect –&gt;<br>            &lt;property name=”out.dex.input.absolute.dir” value=”${out.classes.absolute.dir}” /&gt;<br>             &lt;if&gt;<br>                &lt;condition&gt;<br>                    &lt;isreference refid=”out.dex.jar.input.ref” /&gt;<br>                &lt;/condition&gt;<br>                &lt;else&gt;<br>                    &lt;path id=”out.dex.jar.input.ref”&gt;<br>                        &lt;path refid=”project.all.jars.path” /&gt;<br>                    &lt;/path&gt;<br>                &lt;/else&gt;<br>            &lt;/if&gt;<br>            &lt;echo message=”start dx ${maindexlist.dir}”/&gt;<br>            &lt;multidex executable=”${dx}”<br>                    output=”${out.dir}”<br>                    dexedlibs=”${out.dexed.absolute.dir}”<br>                    nolocals=”@{nolocals}”<br>                    forceJumbo=”${dex.force.jumbo}”<br>                    disableDexMerger=”${dex.disable.merger}”<br>                    multidex=”true”<br>                    mainDexList=”${maindexlist.dir}”<br>                    verbose=”${verbose}”&gt;<br>                &lt;path path=”${out.dex.input.absolute.dir}”/&gt;<br>                &lt;path refid=”out.dex.jar.input.ref” /&gt;<br>                &lt;external-libs /&gt;<br>            &lt;/multidex&gt;<br>        &lt;/sequential&gt;<br>    &lt;/macrodef&gt;</span><span style="font-size: 14px;">&lt;target name=”-maindexlist” depends=”-set-release-mode, -compile, -post-compile, -obfuscate”&gt;<br>        &lt;property name=”out.dex.input.absolute.dir” value=”${out.classes.absolute.dir}” /&gt;<br>        &nbsp;<br>        &lt;!– set the secondary dx input: the project (and library) jar files<br>             If a pre-dex task sets it to something else this has no effect –&gt;<br>        &lt;if&gt;<br>            &lt;condition&gt;<br>                &lt;isreference refid=”out.dex.jar.input.ref” /&gt;<br>            &lt;/condition&gt;<br>            &lt;else&gt;<br>                &lt;path id=”out.dex.jar.input.ref”&gt;<br>                    &lt;path refid=”project.all.jars.path” /&gt;<br>                &lt;/path&gt;<br>            &lt;/else&gt;<br>        &lt;/if&gt;<br>        &lt;maindexlist output=”build/maindexlist-proguard.txt”<br>                mainDexList=”build/maindexlist.txt”<br>                mappingFile=”${out.absolute.dir}/proguard/mapping.txt” &gt;<br>            &lt;path path=”${out.dex.input.absolute.dir}”/&gt;<br>            &lt;path refid=”out.dex.jar.input.ref” /&gt;<br>        &lt;/maindexlist&gt;<br>    &lt;/target&gt;</span></pre><br><span style="font-size: 18px;">m</span><span style="font-size: 18px;">ultidex和maindexlist也是两个自定义task，multidex其实就是调用的dx –dex –multi-dex –main-dex-list=maindexlist.txt  –minimal-main-dex –output bin –input-list,maindexlist task的作用是生成混淆后的主包清单文件。应用启动时代码原理和方案一差不多，也可以直接使用官方的android-surpport-multidex.jar包</span></p>
 
       
 

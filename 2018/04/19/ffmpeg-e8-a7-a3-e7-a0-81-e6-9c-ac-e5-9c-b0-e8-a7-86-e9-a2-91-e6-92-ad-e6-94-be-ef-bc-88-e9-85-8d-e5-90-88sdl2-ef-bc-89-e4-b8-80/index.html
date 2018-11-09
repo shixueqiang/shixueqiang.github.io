@@ -8,19 +8,19 @@
   <link rel="dns-prefetch" href="http://www.shixq.com">
   <title>android FFmpeg3.4.2与SDL2.0.8播放音视频 | shixq</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="一、FFmpeg编译 1、下载源码  https://github.com/FFmpeg/FFmpeg 2、编译环境 ubuntu16.04 64位 3.1、编译脚本  arm64.sh #!/bin/bashNDK=/home/shixq/android-ndk-r14bSYSROOT=$NDK/platforms/android-21/arch-arm64TOOLCHAIN=$NDK/tool">
+  <meta name="description" content="一、FFmpeg编译1、下载源码  https://github.com/FFmpeg/FFmpeg 2、编译环境 ubuntu16.04 64位 3.1、编译脚本  arm64.sh !/bin/bashNDK=/home/shixq/android-ndk-r14bSYSROOT=$NDK/platforms/android-21/arch-arm64TOOLCHAIN=$NDK/toolch">
 <meta property="og:type" content="article">
 <meta property="og:title" content="android FFmpeg3.4.2与SDL2.0.8播放音视频">
 <meta property="og:url" content="http://www.shixq.com/2018/04/19/ffmpeg-e8-a7-a3-e7-a0-81-e6-9c-ac-e5-9c-b0-e8-a7-86-e9-a2-91-e6-92-ad-e6-94-be-ef-bc-88-e9-85-8d-e5-90-88sdl2-ef-bc-89-e4-b8-80/index.html">
 <meta property="og:site_name" content="shixq">
-<meta property="og:description" content="一、FFmpeg编译 1、下载源码  https://github.com/FFmpeg/FFmpeg 2、编译环境 ubuntu16.04 64位 3.1、编译脚本  arm64.sh #!/bin/bashNDK=/home/shixq/android-ndk-r14bSYSROOT=$NDK/platforms/android-21/arch-arm64TOOLCHAIN=$NDK/tool">
+<meta property="og:description" content="一、FFmpeg编译1、下载源码  https://github.com/FFmpeg/FFmpeg 2、编译环境 ubuntu16.04 64位 3.1、编译脚本  arm64.sh !/bin/bashNDK=/home/shixq/android-ndk-r14bSYSROOT=$NDK/platforms/android-21/arch-arm64TOOLCHAIN=$NDK/toolch">
 <meta property="og:locale" content="default">
-<meta property="og:image" content="http://www.shixq.com/wp-content/uploads/2016/09/QQ截图20180422220644-263x300.png">
-<meta property="og:updated_time" content="2018-05-21T06:01:06.558Z">
+<meta property="og:image" content="http://www.shixq.com/2018/04/19/images/ffmpeg_ffplay_android.png">
+<meta property="og:updated_time" content="2018-05-28T02:31:32.233Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="android FFmpeg3.4.2与SDL2.0.8播放音视频">
-<meta name="twitter:description" content="一、FFmpeg编译 1、下载源码  https://github.com/FFmpeg/FFmpeg 2、编译环境 ubuntu16.04 64位 3.1、编译脚本  arm64.sh #!/bin/bashNDK=/home/shixq/android-ndk-r14bSYSROOT=$NDK/platforms/android-21/arch-arm64TOOLCHAIN=$NDK/tool">
-<meta name="twitter:image" content="http://www.shixq.com/wp-content/uploads/2016/09/QQ截图20180422220644-263x300.png">
+<meta name="twitter:description" content="一、FFmpeg编译1、下载源码  https://github.com/FFmpeg/FFmpeg 2、编译环境 ubuntu16.04 64位 3.1、编译脚本  arm64.sh !/bin/bashNDK=/home/shixq/android-ndk-r14bSYSROOT=$NDK/platforms/android-21/arch-arm64TOOLCHAIN=$NDK/toolch">
+<meta name="twitter:image" content="http://www.shixq.com/2018/04/19/images/ffmpeg_ffplay_android.png">
   
     <link rel="alternative" href="/atom.xml" title="shixq" type="application/atom+xml">
   
@@ -172,27 +172,24 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>一、FFmpeg编译</p>
-<p>1、下载源码  <a href="https://github.com/FFmpeg/FFmpeg" target="_blank" rel="noopener">https://github.com/FFmpeg/FFmpeg</a></p>
+        <h3 id="一、FFmpeg编译"><a href="#一、FFmpeg编译" class="headerlink" title="一、FFmpeg编译"></a>一、FFmpeg编译</h3><p>1、下载源码  <a href="https://github.com/FFmpeg/FFmpeg" target="_blank" rel="noopener">https://github.com/FFmpeg/FFmpeg</a></p>
 <p>2、编译环境 ubuntu16.04 64位</p>
 <p>3.1、编译脚本  arm64.sh</p>
-<p>#!/bin/bash<br>NDK=/home/shixq/android-ndk-r14b<br>SYSROOT=$NDK/platforms/android-21/arch-arm64<br>TOOLCHAIN=$NDK/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64</p>
+<p>!/bin/bash<br>NDK=/home/shixq/android-ndk-r14b<br>SYSROOT=$NDK/platforms/android-21/arch-arm64<br>TOOLCHAIN=$NDK/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64</p>
 <p>CPU=arm64-v8a<br>PREFIX=$(pwd)/android/$CPU<br>MP3LAME=/home/shixq/android-projects/ffmpeg/libmp3lame<br>ARCH=aarch64</p>
 <p>./configure \<br>–prefix=$PREFIX \<br>–enable-cross-compile \<br>–cross-prefix=$TOOLCHAIN/bin/aarch64-linux-android- \<br>–target-os=linux \<br>–arch=$ARCH \<br>–sysroot=$SYSROOT \<br>–extra-cflags=”-fPIE -pie -I$SYSROOT/usr/include -I$MP3LAME/include -march=armv8-a” \<br>–extra-ldflags=”-fPIE -pie -L$SYSROOT/usr/lib -L$MP3LAME/lib/$CPU” \<br>–disable-shared \<br>–enable-static \<br>–disable-doc \<br>–disable-ffplay \<br>–disable-decoders \<br>–disable-encoders \<br>–enable-libmp3lame \<br>–enable-encoder=libmp3lame \<br>–enable-decoder=flv \<br>–enable-decoder=mpeg4 \<br>–enable-decoder=h264 \<br>–enable-decoder=hevc \<br>–enable-decoder=yuv4 \<br>–enable-decoder=mp3 \<br>–enable-decoder=aac \<br>–enable-decoder=png \<br>–enable-decoder=mjpeg</p>
 <p>make clean<br>make<br>make install</p>
 <p>3.2、编译脚本arm.sh</p>
-<p>#!/bin/bash<br>NDK=/home/shixq/android-ndk-r14b<br>SYSROOT=$NDK/platforms/android-21/arch-arm<br>TOOLCHAIN=$NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64</p>
+<p>!/bin/bash<br>NDK=/home/shixq/android-ndk-r14b<br>SYSROOT=$NDK/platforms/android-21/arch-arm<br>TOOLCHAIN=$NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64</p>
 <p>CPU=armeabi-v7a<br>PREFIX=$(pwd)/android/$CPU<br>MP3LAME=/home/shixq/android-projects/ffmpeg/libmp3lame<br>ARCH=arm</p>
 <p>./configure \<br>–prefix=$PREFIX \<br>–enable-cross-compile \<br>–cross-prefix=$TOOLCHAIN/bin/arm-linux-androideabi- \<br>–target-os=linux \<br>–arch=$ARCH \<br>–sysroot=$SYSROOT \<br>–extra-cflags=”-fPIE -pie -I$SYSROOT/usr/include -I$MP3LAME/include -march=armv7-a” \<br>–extra-ldflags=”-fPIE -pie -L$SYSROOT/usr/lib -L$MP3LAME/lib/$CPU” \<br>–disable-shared \<br>–enable-static \<br>–disable-doc \<br>–disable-ffplay \<br>–disable-decoders \<br>–disable-encoders \<br>–enable-libmp3lame \<br>–enable-encoder=libmp3lame \<br>–enable-decoder=flv \<br>–enable-decoder=mpeg4 \<br>–enable-decoder=h264 \<br>–enable-decoder=hevc \<br>–enable-decoder=yuv4 \<br>–enable-decoder=mp3 \<br>–enable-decoder=aac \<br>–enable-decoder=png \<br>–enable-decoder=mjpeg</p>
 <p>make clean<br>make<br>make install</p>
-<p>3、将上边的编译脚本放到ffmpeg根目录执行，生成静态库文件和可执行文件。如果用ndk-r14b编译可能会遇到B0宏定义问题，解决办法修改ffmpeg源码中Bo为其他变量（例如b0）。</p>
-<p>二、SDL</p>
-<p>1、下载最新源码2.0.8。</p>
+<p>3、将上边的编译脚本放到ffmpeg根目录执行，生成静态库文件和可执行文件。如果用ndk-r14b编译可能会遇到B0宏定义问题，解决办法修改ffmpeg源码中B0为其他变量（例如b0）。</p>
+<h3 id="二、SDL"><a href="#二、SDL" class="headerlink" title="二、SDL"></a>二、SDL</h3><p>1、下载最新源码2.0.8。</p>
 <p>2、Android Studio新建工程</p>
-<p><img src="http://www.shixq.com/wp-content/uploads/2016/09/QQ截图20180422220644-263x300.png" alt=""></p>
+<p><img src="../images/ffmpeg_ffplay_android.png" alt=""></p>
 <p>将sdl根目录下的src文件夹放到sdl2中，可执行文件放到assets中</p>
-<p>3、如何使用ffmpeg与sdl</p>
-<pre class="html">移植ffmpeg官方示例ffplay，修改ffplay.c中realloc_texture方法</pre>
+<p>3、如何使用ffmpeg与sdl<br>移植ffmpeg官方示例ffplay，修改ffplay.c中realloc_texture方法</p>
 <pre>static int realloc_texture(SDL_Texture **texture, Uint32 new_format, int new_width, int new_height,
                            SDL_BlendMode blendmode, int init_texture) {
     Uint32 format;
@@ -219,39 +216,12 @@
                SDL_GetPixelFormatName(new_format));
     }
     return 0;
-}
-
-修改video_open方法</pre>
-<pre>static int video_open(VideoState *is) {
-    int w, h;
-    SDL_GetWindowSize(window, &amp;screen_width, &amp;screen_height);
-    if (screen_width) {
-        w = screen_width;
-        h = screen_height;
-    } else {
-        w = default_width;
-        h = default_height;
-    }
-
-    if (!window_title)
-        window_title = input_filename;
-    SDL_SetWindowTitle(window, window_title);
-
-    SDL_SetWindowSize(window, w, h);
-    SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
-    if (is_full_screen)
-        SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-    SDL_ShowWindow(window);
-
-    is-&gt;width = w;
-    is-&gt;height = h;
-
-    return 0;
 }</pre>
-<pre>枚举类型ShowMode移到VideoState外边
 
-三、demo地址
-[https://github.com/shixueqiang/ffplay-android](https://github.com/shixueqiang/ffplay-android)</pre>
+<p>修改video_open方法</p>
+<p><pre><br>static int video_open(VideoState *is) {<br>    int w, h;<br>    SDL_GetWindowSize(window, &amp;screen_width, &amp;screen_height);<br>    if (screen_width) {<br>        w = screen_width;<br>        h = screen_height;<br>    } else {<br>        w = default_width;<br>        h = default_height;<br>    }<br>    &nbsp;<br>    if (!window_title)<br>        window_title = input_filename;<br>    SDL_SetWindowTitle(window, window_title);<br>    SDL_SetWindowSize(window, w, h);<br>    SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);<br>    &nbsp;<br>    if (is_full_screen)<br>        SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);<br>    SDL_ShowWindow(window);<br>    is-&gt;width = w;<br>    is-&gt;height = h;<br>    return 0;<br>}<br></pre><br>枚举类型ShowMode移到VideoState外边</p>
+<h3 id="三、demo地址"><a href="#三、demo地址" class="headerlink" title="三、demo地址"></a>三、demo地址</h3><p><a href="https://github.com/shixueqiang/ffplay-android" target="_blank" rel="noopener">https://github.com/shixueqiang/ffplay-android</a></p>
+
       
 
       
@@ -354,6 +324,15 @@
 
   
 <nav id="article-nav">
+  
+    <a href="/2018/11/09/apprtcwebrtc-e6-9c-ac-e5-9c-b0-e6-90-ad-e5-bb-ba-e6-9c-8d-e5-8a-a1-e5-99-a8/" id="article-nav-newer" class="article-nav-link-wrap">
+      <i class="icon-circle-left"></i>
+      <div class="article-nav-title">
+        
+          apprtc(webrtc) 本地搭建服务器
+        
+      </div>
+    </a>
   
   
     <a href="/2018/03/11/android-pcre2-e4-bd-bf-e7-94-a8-e5-8f-8asignal-11-sigsegv-fault-addr-error/" id="article-nav-older" class="article-nav-link-wrap">

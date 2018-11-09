@@ -15,7 +15,7 @@
 <meta property="og:site_name" content="shixq">
 <meta property="og:description" content="使用版本glide-3.7.0 坑一： 无法手动刷新缓存，只能改变key添加自定义签名，我是将头像版本号放到key中了，因为取头像是根据手机号取的，头像url路径并不会变，而且首次加载时并不能拿到版本号。 builder.signature(new StringSignature(etag)); 坑二： 从磁盘缓存加载头像时太慢，导致能看到由默认图变到头像的过程，给人感觉头像闪了一下，体验不好。因">
 <meta property="og:locale" content="default">
-<meta property="og:updated_time" content="2018-05-21T06:01:06.558Z">
+<meta property="og:updated_time" content="2018-05-28T02:31:32.233Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="使用glide填过的各种坑">
 <meta name="twitter:description" content="使用版本glide-3.7.0 坑一： 无法手动刷新缓存，只能改变key添加自定义签名，我是将头像版本号放到key中了，因为取头像是根据手机号取的，头像url路径并不会变，而且首次加载时并不能拿到版本号。 builder.signature(new StringSignature(etag)); 坑二： 从磁盘缓存加载头像时太慢，导致能看到由默认图变到头像的过程，给人感觉头像闪了一下，体验不好。因">
@@ -179,63 +179,16 @@
 <p>坑三：</p>
 <p>服务器返回的是xml数据，需要解析完xml才能获取头像byte[],好在glide有现成的api</p>
 <p>builder.asBitmap().imageDecoder(decoder)</p>
-<p><pre class="html">public class XmlBitmapDecoder implements ResourceDecoder&lt;InputStream, Bitmap&gt; {<br>    private static final String ID = “XmlBitmapDecoder.com.chinamobile.rcs.contacts.glide”;<br>    private String id;<br>    private final BitmapPool bitmapPool;</pre></p>
-<pre><code>public XmlBitmapDecoder(BitmapPool bitmapPool) {
-    this.bitmapPool = bitmapPool;
-}
-
-@Override
-public Resource&amp;lt;Bitmap&amp;gt; decode(InputStream is, int width, int height) throws IOException {
-    AvatarModel avatarModel = Utils.stream2Avatar(is);
-    byte[] datas = avatarModel.getData();
-    Bitmap bitmap = BitmapFactory.decodeByteArray(datas, 0, datas.length);
-    return BitmapResource.obtain(bitmap,bitmapPool);
-}
-
-@Override
-public String getId() {
-    if (this.id == null) {
-        this.id = ID;
-    }
-    return this.id;
-}
-</code></pre><p>}<br>坑四：</p>
+<p><pre class="html">public class XmlBitmapDecoder implements ResourceDecoder&lt;InputStream, Bitmap&gt; {<br>    private static final String ID = “XmlBitmapDecoder.com.chinamobile.rcs.contacts.glide”;<br>    private String id;<br>    private final BitmapPool bitmapPool;<br>    &nbsp;<br>    public XmlBitmapDecoder(BitmapPool bitmapPool) {<br>        this.bitmapPool = bitmapPool;<br>    }<br>    &nbsp;<br>    @Override<br>    public Resource&lt;Bitmap&gt; decode(InputStream is, int width, int height) throws IOException {<br>        AvatarModel avatarModel = Utils.stream2Avatar(is);<br>        byte[] datas = avatarModel.getData();<br>        Bitmap bitmap = BitmapFactory.decodeByteArray(datas, 0, datas.length);<br>        return BitmapResource.obtain(bitmap,bitmapPool);<br>    }<br>    &nbsp;<br>    @Override<br>    public String getId() {<br>        if (this.id == null) {<br>            this.id = ID;<br>        }<br>        return this.id;<br>    }<br>    &nbsp;<br>}</pre><br>坑四：</p>
 <p>消息列表中因为有不同的消息类型，默认头像也不一样，glide占位图不设置时，会设置null，所以onLoadStarted方法里需要区分开；</p>
 <p>坑五：</p>
 <p>token验证，切圆角图，这个相对容易实现</p>
 <p>坑六：</p>
 <p>某些场景需要跳过缓存强制从网络拉取，但是需要先用缓存的头像当占位图，这点上glide没有开放现成的api，实现方式有点迂回：</p>
-<p><pre class="html">DrawableTypeRequest&lt;MyGlideUrl&gt; builder = Glide.with(mContext).using(new StreamModelLoader&lt;MyGlideUrl&gt;() {</pre></p>
-<pre><code>    @Override
-    public DataFetcher&amp;lt;InputStream&amp;gt; getResourceFetcher(final MyGlideUrl model, int arg1, int arg2) {
-        return new DataFetcher&amp;lt;InputStream&amp;gt;() {
-            @Override
-            public InputStream loadData(Priority priority) throws Exception {
-                throw new IOException();
-                // do nothing
-            }
-
-            @Override
-            public void cleanup() {
-
-            }
-
-            @Override
-            public String getId() {
-                return model.getCacheKey();
-            }
-
-            @Override
-            public void cancel() {
-
-            }
-        };
-    }
-}).load(glideUrl);&lt;/pre&gt;
-</code></pre><p>重点是loadData里边不做任何事，正常情况下这里本该写从网络拉取头像获取输入流的逻辑。这样就能变相实现从缓存拿到bitmap。</p>
+<p><pre class="html">DrawableTypeRequest&lt;MyGlideUrl&gt; builder = Glide.with(mContext).using(new StreamModelLoader&lt;MyGlideUrl&gt;() {<br>            &nbsp;<br>            @Override<br>            public DataFetcher&lt;InputStream&gt; getResourceFetcher(final MyGlideUrl model, int arg1, int arg2) {<br>                return new DataFetcher&lt;InputStream&gt;() {<br>                    @Override<br>                    public InputStream loadData(Priority priority) throws Exception {<br>                        throw new IOException();<br>                        // do nothing<br>                    }<br>                    &nbsp;<br>                    @Override<br>                    public void cleanup() {<br>                        &nbsp;<br>                    }<br>                    &nbsp;<br>                    @Override<br>                    public String getId() {<br>                        return model.getCacheKey();<br>                    }<br>                    &nbsp;<br>                    @Override<br>                    public void cancel() {<br>                        &nbsp;<br>                    }<br>                };<br>            }<br>        }).load(glideUrl);</pre><br>重点是loadData里边不做任何事，正常情况下这里本该写从网络拉取头像获取输入流的逻辑。这样就能变相实现从缓存拿到bitmap。</p>
 <p>坑七：</p>
 <p>还是加载慢的问题，但是有时候从memory缓存里加载竟然也需要50，60ms，打开glide调试，发现从缓存加载只需要零点几毫秒，但是从我代码调用到真正发起请求竟然用了大部分时间，有人说是得到view宽高后才会发起请求，于是添加.override(w, h)，效果不明显。</p>
-<p>已经决定自己实现一套头像加载逻辑了，用第三方的实在是不够灵活</p>
+<p>自己手动改了改，增加了在缓存中删除单个key的方法</p>
 
       
 
